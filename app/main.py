@@ -1,12 +1,15 @@
 from fastapi import FastAPI
-from app.core.database import Base, engine
-from app.models import usuario, rol
-from app.core.database import Base, engine
-from app.models import *
+from models import *
+from core.database import Base, engine
+from routes import users, auth, predict
 
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.include_router(users.router)
+app.include_router(auth.router)
+app.include_router(predict.router)
+
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def read_root():
@@ -15,7 +18,9 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "OK"}
+from core.database import SessionLocal
 
-
-
-Base.metadata.create_all(bind=engine)
+@app.get("/test-db")
+def test_db():
+    db = SessionLocal()
+    return {"mensaje": "conexion exitosa con la base de datos"}

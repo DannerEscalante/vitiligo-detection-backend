@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from core.database import Base
 
 class Paciente(Base):
     __tablename__ = "pacientes"
@@ -14,3 +14,5 @@ class Paciente(Base):
     usuario = relationship("Usuario")
     imagenes = relationship("Imagen", back_populates="paciente")
     historiales = relationship("HistorialClinico", back_populates="paciente")
+    antecedentes = relationship("PacienteAntecedente")
+    

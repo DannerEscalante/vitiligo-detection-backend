@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Text, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.core.database import Base
+from core.database import Base
 
 class HistorialClinico(Base):
     __tablename__ = "historiales_clinicos"

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, DECIMAL
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.core.database import Base
+from core.database import Base
 
 class Prediccion(Base):
     __tablename__ = "predicciones"

@@ -2,8 +2,8 @@ from . import rol
 from . import usuario
 from . import paciente
 from . import doctor
-from . import enfermedad
-from . import paciente_enfermedad
+from . import antecedente
+from . import paciente_antecedente
 from . import imagen
 from . import prediccion
 from . import historial_clinico
