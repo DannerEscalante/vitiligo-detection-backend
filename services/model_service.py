@@ -4,7 +4,7 @@ from PIL import Image
 
 MODEL_PATH = "models_ml/modelo_vitiligo_final.h5"
 
-modelo = tf.keras.models.load_model(MODEL_PATH)
+modelo = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
 
 
