@@ -19,6 +19,7 @@ def predecir_imagen(file):
     model = cargar_modelo()
 
     # Leer imagen como en colab
+    file.seek(0)
     file_bytes = np.frombuffer(file.read(), np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
