@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
-MODEL_PATH = "models_ml/modelo_vitiligo_final.h5"
+MODEL_PATH = "models_ml/modelo_vitiligo_final.keras"
 
 modelo = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
