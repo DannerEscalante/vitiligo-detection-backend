@@ -2,12 +2,16 @@ from fastapi import FastAPI
 from models import *
 from core.database import Base, engine
 from routes import users, auth, predict
+from routes import historial
+
+
 
 
 app = FastAPI()
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(predict.router)
+app.include_router(historial.router)
 
 Base.metadata.create_all(bind=engine)
 
