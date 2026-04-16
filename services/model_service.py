@@ -37,7 +37,9 @@ def cargar_modelo():
 
 def predecir_imagen(ruta_imagen):
     from PIL import Image
-    import numpy as np
+
+    # 🔥 ESTA ES LA LÍNEA CLAVE
+    model = cargar_modelo()
 
     img = Image.open(ruta_imagen).convert("RGB")
     img = img.resize((224, 224))
@@ -45,7 +47,7 @@ def predecir_imagen(ruta_imagen):
     img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    pred = modelo.predict(img_array)[0][0]
+    pred = model.predict(img_array)[0][0]
 
     if pred >= 0.5:
         diagnostico = "VITÍLIGO DETECTADO"
