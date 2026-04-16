@@ -35,35 +35,27 @@ def cargar_modelo():
     return modelo
 
 
-def predecir_imagen(file):
-    model = cargar_modelo()
+def predecir_imagen(ruta_imagen):
+    from PIL import Image
+    import numpy as np
 
-    file.seek(0)
-    file_bytes = np.frombuffer(file.read(), np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    img = Image.open(ruta_imagen).convert("RGB")
+    img = img.resize((224, 224))
 
-    if img is None:
-        raise Exception("No se pudo leer la imagen")
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pred = modelo.predict(img_array)[0][0]
 
-    img_resized = cv2.resize(img_rgb, (224, 224))
-
-    img_input = preprocess_input(
-        np.expand_dims(img_resized, axis=0).astype(np.float32)
-    )
-
-    prob = float(model.predict(img_input, verbose=0)[0][0])
-
-    if prob >= 0.5:
+    if pred >= 0.5:
         diagnostico = "VITÍLIGO DETECTADO"
-        confianza = prob * 100
+        confianza = float(pred * 100)
     else:
-        diagnostico = "PIEL SANA (NO VITÍLIGO)"
-        confianza = (1.0 - prob) * 100
+        diagnostico = "NO VITÍLIGO"
+        confianza = float((1 - pred) * 100)
 
     return {
-        "probabilidad": prob,
+        "probabilidad": float(pred),
         "diagnostico": diagnostico,
         "confianza": confianza
     }
