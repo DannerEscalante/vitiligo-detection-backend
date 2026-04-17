@@ -7,6 +7,8 @@ from models import Paciente, Imagen, Prediccion
 from datetime import datetime
 import shutil
 import os
+from fastapi import HTTPException
+import uuid
 
 router = APIRouter()
 
@@ -19,7 +21,12 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+        
 
+
+filename = f"{uuid.uuid4()}.jpg"
+file_path = f"{UPLOAD_DIR}/{filename}"
 @router.post("/predict")
 async def predict(
     imagen: UploadFile = File(...),
@@ -27,18 +34,27 @@ async def predict(
     db: Session = Depends(get_db)
 ):
     try:
-        # 🔹 1. Obtener paciente
+
+        if not imagen:
+            raise HTTPException(status_code=400, detail="No se envió ninguna imagen")
+
+        if imagen.filename == "":
+            raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+
+        if not imagen.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="El archivo debe ser una imagen")
+
+
         paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
 
         if not paciente:
-            return {"error": "Paciente no encontrado"}
+            raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-        # 🔹 2. Guardar imagen en servidor
         file_path = f"{UPLOAD_DIR}/{imagen.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(imagen.file, buffer)
 
-        # 🔹 3. Guardar imagen en BD
+
         nueva_imagen = Imagen(
             paciente_id=paciente.id,
             url_imagen=file_path,
@@ -48,10 +64,10 @@ async def predict(
         db.commit()
         db.refresh(nueva_imagen)
 
-        # 🔹 4. Predecir
+
         resultado = predecir_imagen(file_path)
 
-        # 🔹 5. Guardar predicción
+
         nueva_prediccion = Prediccion(
             imagen_id=nueva_imagen.id,
             resultado=resultado["diagnostico"],
@@ -61,13 +77,11 @@ async def predict(
         db.add(nueva_prediccion)
         db.commit()
 
-        # 🔹 6. Respuesta
+
         return {
             "usuario_id": usuario_id,
             **resultado
         }
 
     except Exception as e:
-        return {
-            "error": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))

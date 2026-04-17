@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from core.deps import obtener_usuario_actual
 from core.database import SessionLocal
@@ -19,18 +19,18 @@ def obtener_historial(
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
-    # 🔹 1. Obtener paciente
+    
     paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
 
     if not paciente:
-        return {"error": "Paciente no encontrado"}
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-    # 🔹 2. Obtener imágenes del paciente
+    
     imagenes = db.query(Imagen).filter(Imagen.paciente_id == paciente.id).all()
 
     historial = []
 
-    # 🔹 3. Recorrer imágenes y obtener predicciones
+   
     for img in imagenes:
         predicciones = db.query(Prediccion).filter(Prediccion.imagen_id == img.id).all()
 

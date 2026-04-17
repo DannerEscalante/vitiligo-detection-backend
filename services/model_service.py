@@ -30,15 +30,18 @@ def construir_modelo():
 def cargar_modelo():
     global modelo
     if modelo is None:
-        modelo = construir_modelo()
-        modelo.load_weights(MODEL_WEIGHTS)
+        try:
+            modelo = construir_modelo()
+            modelo.load_weights(MODEL_WEIGHTS)
+        except Exception:
+            raise Exception("Error cargando el modelo")
     return modelo
 
 
 def predecir_imagen(ruta_imagen):
     from PIL import Image
 
-    # 🔥 ESTA ES LA LÍNEA CLAVE
+    
     model = cargar_modelo()
 
     img = Image.open(ruta_imagen).convert("RGB")
