@@ -27,6 +27,8 @@ def get_db():
 
 filename = f"{uuid.uuid4()}.jpg"
 file_path = f"{UPLOAD_DIR}/{filename}"
+
+
 @router.post("/predict")
 async def predict(
     imagen: UploadFile = File(...),
@@ -43,6 +45,14 @@ async def predict(
 
         if not imagen.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="El archivo debe ser una imagen")
+        
+        contenido = await imagen.read()
+
+        if len(contenido) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="La imagen es demasiado grande (máx 5MB)")
+
+        from io import BytesIO
+        imagen.file = BytesIO(contenido)
 
 
         paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
