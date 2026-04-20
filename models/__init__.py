@@ -8,3 +8,5 @@ from .imagen import Imagen
 from .prediccion import Prediccion
 from .historial_clinico import HistorialClinico
 from .cita import Cita
+from .tipo_tratamiento import TipoTratamiento
+from .tratamiento import Tratamiento
