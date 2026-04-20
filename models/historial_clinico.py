@@ -13,9 +13,12 @@ class HistorialClinico(Base):
     notas = Column(Text)
     diagnostico = Column(Text)
     fecha = Column(TIMESTAMP, default=datetime.utcnow)
-    
+    cita_id = Column(Integer, ForeignKey("citas.id"), nullable=True)
 
 
     prediccion = relationship("Prediccion")
     paciente = relationship("Paciente", back_populates="historiales")
     doctor = relationship("Doctor", back_populates="historiales")
+    
+    
+    cita = relationship("Cita", back_populates="historial")

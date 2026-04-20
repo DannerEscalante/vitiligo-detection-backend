@@ -13,3 +13,4 @@ class Doctor(Base):
 
     usuario = relationship("Usuario")
     historiales = relationship("HistorialClinico", back_populates="doctor")
+    citas = relationship("Cita", back_populates="doctor", cascade="all, delete")

@@ -16,3 +16,5 @@ class Paciente(Base):
     historiales = relationship("HistorialClinico", back_populates="paciente")
     antecedentes = relationship("PacienteAntecedente")
     
+    citas = relationship("Cita", back_populates="paciente", cascade="all, delete")
+    

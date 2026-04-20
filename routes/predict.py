@@ -9,6 +9,7 @@ import shutil
 import os
 from fastapi import HTTPException
 import uuid
+from io import BytesIO
 
 router = APIRouter()
 
@@ -51,7 +52,7 @@ async def predict(
         if len(contenido) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="La imagen es demasiado grande (máx 5MB)")
 
-        from io import BytesIO
+        
         imagen.file = BytesIO(contenido)
 
 
