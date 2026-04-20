@@ -7,3 +7,4 @@ from .paciente_antecedente import PacienteAntecedente
 from .imagen import Imagen
 from .prediccion import Prediccion
 from .historial_clinico import HistorialClinico
+from .cita import Cita
