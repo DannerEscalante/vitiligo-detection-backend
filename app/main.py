@@ -3,6 +3,7 @@ from models import *
 from core.database import Base, engine
 from routes import users, auth, predict
 from routes import historial
+from routes import citas
 
 
 
@@ -12,6 +13,7 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(predict.router)
 app.include_router(historial.router)
+app.include_router(citas.router)
 
 Base.metadata.create_all(bind=engine)
 
