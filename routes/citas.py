@@ -22,6 +22,7 @@ def get_db():
 @router.post("/")
 def crear_cita(
     fecha_hora: datetime,
+    doctor_id: int,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
@@ -31,16 +32,37 @@ def crear_cita(
     if not paciente:
         raise HTTPException(status_code=403, detail="Solo pacientes pueden crear citas")
 
+    # 🔴 1. Validar fecha en el futuro
     if fecha_hora < datetime.utcnow():
         raise HTTPException(status_code=400, detail="No puedes agendar en el pasado")
 
-    doctor = db.query(Doctor).first()
+    # 🔴 2. Validar doctor existe
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
     if not doctor:
-        raise HTTPException(status_code=404, detail="No hay doctores disponibles")
+        raise HTTPException(status_code=404, detail="Doctor no encontrado")
 
+    # 🔴 3. Evitar doble cita del mismo paciente a la misma hora
+    cita_existente = db.query(Cita).filter(
+        Cita.paciente_id == paciente.id,
+        Cita.fecha_hora == fecha_hora
+    ).first()
+
+    if cita_existente:
+        raise HTTPException(status_code=400, detail="Ya tienes una cita en ese horario")
+
+    # 🔴 4. Evitar que el doctor tenga dos citas al mismo tiempo
+    conflicto_doctor = db.query(Cita).filter(
+        Cita.doctor_id == doctor_id,
+        Cita.fecha_hora == fecha_hora
+    ).first()
+
+    if conflicto_doctor:
+        raise HTTPException(status_code=400, detail="El doctor ya tiene una cita en ese horario")
+
+    # 🟢 Crear cita
     nueva_cita = Cita(
         paciente_id=paciente.id,
-        doctor_id=doctor.id,
+        doctor_id=doctor_id,
         fecha_hora=fecha_hora,
         estado="pendiente",
         fecha_creacion=datetime.utcnow()
@@ -51,7 +73,6 @@ def crear_cita(
     db.refresh(nueva_cita)
 
     return nueva_cita
-
 
 # 🟢 VER MIS CITAS
 @router.get("/mis-citas")
