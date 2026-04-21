@@ -4,6 +4,7 @@ from core.database import Base, engine
 from routes import users, auth, predict
 from routes import historial
 from routes import citas
+from routes import tratamientos
 
 
 
