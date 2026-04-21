@@ -98,6 +98,61 @@ def crear_cita(
 
     return nueva_cita
 
+@router.patch("/{cita_id}/confirmar")
+def confirmar_cita(
+    cita_id: int,
+    duracion: int = 30,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    # 🔴 validar doctor
+    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
+    if not doctor:
+        raise HTTPException(status_code=403, detail="Solo doctores pueden confirmar citas")
+
+    cita = db.query(Cita).filter(Cita.id == cita_id).first()
+    if not cita:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+    # 🔴 validar que la cita sea de este doctor
+    if cita.doctor_id != doctor.id:
+        raise HTTPException(status_code=403, detail="No puedes modificar esta cita")
+
+    # 🔴 validar duración
+    if duracion < 15 or duracion > 120:
+        raise HTTPException(status_code=400, detail="Duración inválida")
+
+    inicio_nueva = cita.fecha_hora
+    fin_nueva = cita.fecha_hora + timedelta(minutes=duracion)
+
+    # 🔥 validar conflictos SOLO con otras citas confirmadas
+    citas_doctor = db.query(Cita).filter(
+        Cita.doctor_id == doctor.id,
+        Cita.id != cita.id,
+        Cita.estado == "confirmada"
+    ).all()
+
+    for c in citas_doctor:
+        inicio_existente = c.fecha_hora
+        fin_existente = c.fecha_hora + timedelta(minutes=c.duracion)
+
+        if (inicio_nueva < fin_existente) and (fin_nueva > inicio_existente):
+            raise HTTPException(
+                status_code=400,
+                detail="Conflicto con otra cita confirmada"
+            )
+
+    # 🟢 actualizar cita
+    cita.duracion = duracion
+    cita.estado = "confirmada"
+
+    db.commit()
+    db.refresh(cita)
+
+    return cita
+
+
+
 # 🟢 VER MIS CITAS
 @router.get("/mis-citas")
 def ver_mis_citas(
