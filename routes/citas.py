@@ -105,6 +105,7 @@ def confirmar_cita(
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
+    print("usuario_id:", usuario_id)
     # 🔴 validar doctor
     doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
     if not doctor:
