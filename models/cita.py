@@ -15,6 +15,7 @@ class Cita(Base):
     motivo = Column(Text)
     observaciones = Column(Text)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
+    duracion = Column(Integer, default=30)  # minutos
 
     # relaciones
     paciente = relationship("Paciente", back_populates="citas")
