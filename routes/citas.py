@@ -2,32 +2,38 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from core.database import get_db
-from models.cita import Cita
-from models.paciente import Paciente
-from models.doctor import Doctor
-from models.usuario import Usuario
+from core.database import SessionLocal
+from core.deps import obtener_usuario_actual
 
-from routes.auth import get_current_user
+from models import Paciente, Doctor, Cita
 
 router = APIRouter(prefix="/citas", tags=["Citas"])
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 # CREAR CITA (PACIENTE)
 @router.post("/")
-def crear_cita(fecha_hora: datetime, db: Session = Depends(get_db), user: Usuario = Depends(get_current_user)):
+def crear_cita(
+    fecha_hora: datetime,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
 
-    paciente = db.query(Paciente).filter(Paciente.usuario_id == user.id).first()
+    paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+
     if not paciente:
         raise HTTPException(status_code=403, detail="Solo pacientes pueden crear citas")
 
-    # ⚠️ Validación básica (no citas en el pasado)
     if fecha_hora < datetime.utcnow():
         raise HTTPException(status_code=400, detail="No puedes agendar en el pasado")
 
-    # ⚠️ (opcional luego) evitar duplicadas
-
-    # por ahora asignamos doctor 1 (luego lo haces dinámico)
     doctor = db.query(Doctor).first()
     if not doctor:
         raise HTTPException(status_code=404, detail="No hay doctores disponibles")
@@ -47,11 +53,15 @@ def crear_cita(fecha_hora: datetime, db: Session = Depends(get_db), user: Usuari
     return nueva_cita
 
 
-# VER MIS CITAS (PACIENTE)
+# 🟢 VER MIS CITAS
 @router.get("/mis-citas")
-def ver_mis_citas(db: Session = Depends(get_db), user: Usuario = Depends(get_current_user)):
+def ver_mis_citas(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
 
-    paciente = db.query(Paciente).filter(Paciente.usuario_id == user.id).first()
+    paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+
     if not paciente:
         raise HTTPException(status_code=403, detail="Solo pacientes")
 
@@ -60,11 +70,15 @@ def ver_mis_citas(db: Session = Depends(get_db), user: Usuario = Depends(get_cur
     return citas
 
 
-# VER CITAS DEL DOCTOR
+# 🟢 VER CITAS DEL DOCTOR
 @router.get("/doctor")
-def ver_citas_doctor(db: Session = Depends(get_db), user: Usuario = Depends(get_current_user)):
+def ver_citas_doctor(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
 
-    doctor = db.query(Doctor).filter(Doctor.usuario_id == user.id).first()
+    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
+
     if not doctor:
         raise HTTPException(status_code=403, detail="Solo doctores")
 
@@ -73,15 +87,22 @@ def ver_citas_doctor(db: Session = Depends(get_db), user: Usuario = Depends(get_
     return citas
 
 
-# CAMBIAR ESTADO (DOCTOR)
+# 🟢 CAMBIAR ESTADO
 @router.patch("/{cita_id}")
-def cambiar_estado_cita(cita_id: int, estado: str, db: Session = Depends(get_db), user: Usuario = Depends(get_current_user)):
+def cambiar_estado_cita(
+    cita_id: int,
+    estado: str,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
 
-    doctor = db.query(Doctor).filter(Doctor.usuario_id == user.id).first()
+    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
+
     if not doctor:
         raise HTTPException(status_code=403, detail="Solo doctores")
 
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
+
     if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
 
