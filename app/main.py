@@ -15,6 +15,7 @@ app.include_router(auth.router)
 app.include_router(predict.router)
 app.include_router(historial.router)
 app.include_router(citas.router)
+app.include_router(tratamientos.router)
 
 Base.metadata.create_all(bind=engine)
 
