@@ -136,7 +136,9 @@ def ver_citas_doctor(
     if not doctor:
         raise HTTPException(status_code=403, detail="Solo doctores pueden ver sus citas")
 
-    citas = db.query(Cita).filter(Cita.doctor_id == doctor.id).all()
+    citas = db.query(Cita).filter(
+        (Cita.doctor_id == doctor.id) | (Cita.doctor_id == None)
+    ).all()
 
     resultado = []
 
