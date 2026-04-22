@@ -24,3 +24,4 @@ class HistorialClinico(Base):
     cita = relationship("Cita", back_populates="historial")
     tratamiento_id = Column(Integer, ForeignKey("tratamientos.id"), nullable=True)
     tratamiento = relationship("Tratamiento", back_populates="historiales")
+    
