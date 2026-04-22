@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
 
-from models import Paciente, Doctor, Cita
+from models import Paciente, Doctor, Cita, Prediccion, Imagen
 
 router = APIRouter(prefix="/citas", tags=["Citas"])
 
@@ -21,6 +21,7 @@ def get_db():
 @router.post("/")
 def crear_cita(
     fecha_hora: datetime,
+    prediccion_id: int = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
@@ -35,8 +36,34 @@ def crear_cita(
     if fecha_hora.hour < 6 or fecha_hora.hour >= 22:
         raise HTTPException(status_code=400, detail="Fuera de horario de atención")
 
+    # validar si el paciente ya tiene predicciones
+    tiene_predicciones = db.query(Prediccion)\
+        .join(Imagen)\
+        .filter(Imagen.paciente_id == paciente.id)\
+        .first()
+
+    # si no tiene ninguna predicción previa, obligar
+    if not tiene_predicciones and prediccion_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Debes realizar una predicción antes de agendar tu primera cita"
+        )
+
+    # si envía prediccion_id, validar que le pertenece
+    if prediccion_id:
+        pred = db.query(Prediccion)\
+            .join(Imagen)\
+            .filter(
+                Prediccion.id == prediccion_id,
+                Imagen.paciente_id == paciente.id
+            ).first()
+
+        if not pred:
+            raise HTTPException(status_code=403, detail="Predicción inválida")
+
     nueva_cita = Cita(
         paciente_id=paciente.id,
+        prediccion_id=prediccion_id,
         fecha_hora=fecha_hora,
         duracion=30,
         estado="pendiente",
@@ -111,7 +138,27 @@ def ver_citas_doctor(
 
     citas = db.query(Cita).filter(Cita.doctor_id == doctor.id).all()
 
-    return citas
+    resultado = []
+
+    for c in citas:
+        data = {
+            "id": c.id,
+            "fecha_hora": c.fecha_hora,
+            "estado": c.estado,
+            "duracion": c.duracion,
+            "paciente_id": c.paciente_id
+        }
+
+        if c.prediccion:
+            data["prediccion"] = {
+                "resultado": c.prediccion.resultado,
+                "confianza": float(c.prediccion.confianza),
+                "imagen": c.prediccion.imagen.url_imagen if c.prediccion.imagen else None
+            }
+
+        resultado.append(data)
+
+    return resultado
 
 
 @router.get("/mis-citas")

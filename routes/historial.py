@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from core.deps import obtener_usuario_actual
-from core.database import SessionLocal
-from models import Paciente, Imagen, Prediccion
+from datetime import datetime
 
-router = APIRouter()
+from core.database import SessionLocal
+from core.deps import obtener_usuario_actual
+
+from models import Doctor, Cita, HistorialClinico, Prediccion
+
+router = APIRouter(prefix="/historial-clinico", tags=["Historial Clínico"])
+
 
 def get_db():
     db = SessionLocal()
@@ -14,32 +18,44 @@ def get_db():
         db.close()
 
 
-@router.get("/historial")
-def obtener_historial(
+@router.post("/desde-cita/{cita_id}")
+def crear_historial_desde_cita(
+    cita_id: int,
+    diagnostico: str,
+    notas: str = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
-    
-    paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
 
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    if not doctor:
+        raise HTTPException(status_code=403, detail="Solo doctores pueden crear historial")
 
-    
-    imagenes = db.query(Imagen).filter(Imagen.paciente_id == paciente.id).all()
+    cita = db.query(Cita).filter(Cita.id == cita_id).first()
 
-    historial = []
+    if not cita:
+        raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-   
-    for img in imagenes:
-        predicciones = db.query(Prediccion).filter(Prediccion.imagen_id == img.id).all()
+    if cita.estado != "confirmada":
+        raise HTTPException(status_code=400, detail="La cita debe estar confirmada")
 
-        for pred in predicciones:
-            historial.append({
-                "imagen": img.url_imagen,
-                "resultado": pred.resultado,
-                "confianza": pred.confianza,
-                "fecha": pred.fecha_prediccion
-            })
+    # evitar duplicados
+    existente = db.query(HistorialClinico).filter(HistorialClinico.cita_id == cita.id).first()
+    if existente:
+        raise HTTPException(status_code=400, detail="Ya existe historial para esta cita")
+
+    historial = HistorialClinico(
+        paciente_id=cita.paciente_id,
+        doctor_id=doctor.id,
+        cita_id=cita.id,
+        prediccion_id=cita.prediccion_id,
+        diagnostico=diagnostico,
+        notas=notas,
+        fecha=datetime.utcnow()
+    )
+
+    db.add(historial)
+    db.commit()
+    db.refresh(historial)
 
     return historial

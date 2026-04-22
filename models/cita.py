@@ -16,8 +16,10 @@ class Cita(Base):
     observaciones = Column(Text)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
     duracion = Column(Integer, default=30)  # minutos
+    prediccion_id = Column(Integer, ForeignKey("predicciones.id"), nullable=True)
 
     # relaciones
     paciente = relationship("Paciente", back_populates="citas")
     doctor = relationship("Doctor", back_populates="citas")
     historial = relationship("HistorialClinico", back_populates="cita", uselist=False)
+    prediccion = relationship("Prediccion")
