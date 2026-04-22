@@ -185,20 +185,49 @@ def cambiar_estado_cita(
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
-    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
-
-    if not doctor:
-        raise HTTPException(status_code=403, detail="Solo doctores pueden cambiar el estado")
+    from models import Paciente
 
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
 
     if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
 
+    # no modificar si ya finalizada
+    if cita.estado == "finalizada":
+        raise HTTPException(status_code=400, detail="La cita ya está finalizada")
+
+    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
+    paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+
+    # validar estado permitido
     if estado not in ["pendiente", "confirmada", "cancelada", "finalizada"]:
         raise HTTPException(status_code=400, detail="Estado inválido")
 
-    cita.estado = estado
+    # 🔵 SI ES DOCTOR
+    if doctor:
+        # no puede confirmar si está cancelada
+        if estado == "confirmada" and cita.estado == "cancelada":
+            raise HTTPException(status_code=400, detail="No puedes confirmar una cita cancelada")
+
+        # no puede finalizar si no está confirmada
+        if estado == "finalizada" and cita.estado != "confirmada":
+            raise HTTPException(status_code=400, detail="Solo puedes finalizar citas confirmadas")
+
+        cita.estado = estado
+
+    # 🟢 SI ES PACIENTE
+    elif paciente:
+        # solo puede cancelar sus propias citas
+        if cita.paciente_id != paciente.id:
+            raise HTTPException(status_code=403, detail="No puedes modificar esta cita")
+
+        if estado != "cancelada":
+            raise HTTPException(status_code=403, detail="Solo puedes cancelar la cita")
+
+        cita.estado = "cancelada"
+
+    else:
+        raise HTTPException(status_code=403, detail="Usuario no autorizado")
 
     db.commit()
     db.refresh(cita)
