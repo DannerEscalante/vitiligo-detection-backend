@@ -51,7 +51,7 @@ def register_completo(
     # verificar si ya existe
     existente = db.query(Usuario).filter(Usuario.email == email).first()
     if existente:
-        raise HTTPException(status_code=400, detail="El usuario ya existe")
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
     # crear usuario
     nuevo_usuario = Usuario(
