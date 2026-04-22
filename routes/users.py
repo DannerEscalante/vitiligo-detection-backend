@@ -33,3 +33,7 @@ def registrar_usuario(datos: UsuarioCreate, db: Session = Depends(get_db)):
         "mensaje": "Usuario registrado correctamente",
         "usuario_id": nuevo_usuario.id
     }
+    
+    
+    
+    

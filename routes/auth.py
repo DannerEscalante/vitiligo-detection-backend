@@ -1,14 +1,16 @@
-import token
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from core.database import SessionLocal
 from models.usuario import Usuario
+from models.paciente import Paciente
+
 from app.schemas.auth import LoginSchema
-from core.security import verify_password
+from core.security import verify_password, hash_password
 from core.jwt import crear_token
 
 router = APIRouter()
+
 
 def get_db():
     db = SessionLocal()
@@ -17,6 +19,8 @@ def get_db():
     finally:
         db.close()
 
+
+# LOGIN
 @router.post("/login")
 def login(datos: LoginSchema, db: Session = Depends(get_db)):
     
@@ -30,4 +34,52 @@ def login(datos: LoginSchema, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer"
+    }
+
+
+# REGISTER COMPLETO
+@router.post("/register-completo")
+def register_completo(
+    email: str,
+    contrasena: str,
+    nombre: str,
+    fecha_nacimiento: str,
+    sexo: str,
+    db: Session = Depends(get_db)
+):
+
+    # verificar si ya existe
+    existente = db.query(Usuario).filter(Usuario.email == email).first()
+    if existente:
+        raise HTTPException(status_code=400, detail="El usuario ya existe")
+
+    # crear usuario
+    nuevo_usuario = Usuario(
+        email=email,
+        contrasena=hash_password(contrasena),
+        rol_id=1  # paciente por defecto
+    )
+
+    db.add(nuevo_usuario)
+    db.commit()
+    db.refresh(nuevo_usuario)
+
+    # crear paciente
+    paciente = Paciente(
+        usuario_id=nuevo_usuario.id,
+        nombre=nombre,
+        fecha_nacimiento=fecha_nacimiento,
+        sexo=sexo
+    )
+
+    db.add(paciente)
+    db.commit()
+
+    # generar token automático
+    token = crear_token({"sub": str(nuevo_usuario.id)})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "usuario_id": nuevo_usuario.id
     }
