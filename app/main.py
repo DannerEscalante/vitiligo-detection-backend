@@ -5,6 +5,8 @@ from routes import users, auth, predict
 from routes import historial
 from routes import citas
 from routes import tratamientos
+from routes import doctores
+from routes import pacientes
 
 
 
@@ -16,6 +18,8 @@ app.include_router(predict.router)
 app.include_router(historial.router)
 app.include_router(citas.router)
 app.include_router(tratamientos.router)
+app.include_router(doctores.router)
+app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
 
