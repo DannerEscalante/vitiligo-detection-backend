@@ -81,5 +81,6 @@ def register_completo(
     return {
         "access_token": token,
         "token_type": "bearer",
-        "usuario_id": nuevo_usuario.id
+        "usuario_id": nuevo_usuario.id,
+        "rol_id": nuevo_usuario.rol_id 
     }
