@@ -61,6 +61,7 @@ def obtener_perfil_paciente(
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
     return {
+        "id": paciente.id,
         "nombre": paciente.nombre,
         "fecha_nacimiento": paciente.fecha_nacimiento,
         "sexo": paciente.sexo

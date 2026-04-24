@@ -57,6 +57,7 @@ def obtener_perfil_doctor(
         raise HTTPException(status_code=404, detail="Doctor no encontrado")
 
     return {
+        "id": doctor.id,
         "nombre": doctor.nombre,
         "fecha_nacimiento": doctor.fecha_nacimiento,
         "sexo": doctor.sexo
