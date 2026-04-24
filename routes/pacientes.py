@@ -48,7 +48,6 @@ def crear_paciente(
 
     return paciente
 
-
 @router.get("/perfil")
 def obtener_perfil_paciente(
     usuario_id: str = Depends(obtener_usuario_actual),
@@ -66,3 +65,43 @@ def obtener_perfil_paciente(
         "fecha_nacimiento": paciente.fecha_nacimiento,
         "sexo": paciente.sexo
     }
+    
+@router.put("/perfil")
+def actualizar_perfil_paciente(
+    nombre: str = None,
+    fecha_nacimiento: str = None,
+    sexo: str = None,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    paciente = db.query(Paciente).filter(
+        Paciente.usuario_id == int(usuario_id)
+    ).first()
+
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    if nombre is not None:
+        paciente.nombre = nombre
+
+    if fecha_nacimiento is not None:
+        paciente.fecha_nacimiento = fecha_nacimiento
+
+    if sexo is not None:
+        paciente.sexo = sexo
+
+    db.commit()
+    db.refresh(paciente)
+
+    return {
+        "mensaje": "Perfil actualizado correctamente"
+    }  
+    
+    
+    
+    
+    
+    
+    
+    
+    

@@ -44,7 +44,6 @@ def crear_doctor(
 
     return doctor
 
-
 @router.get("/perfil")
 def obtener_perfil_doctor(
     usuario_id: str = Depends(obtener_usuario_actual),
@@ -62,3 +61,44 @@ def obtener_perfil_doctor(
         "fecha_nacimiento": doctor.fecha_nacimiento,
         "sexo": doctor.sexo
     }
+    
+@router.put("/perfil")
+def actualizar_perfil_doctor(
+    nombre: str = None,
+    fecha_nacimiento: str = None,
+    sexo: str = None,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor no encontrado")
+
+    if nombre is not None:
+        doctor.nombre = nombre
+
+    if fecha_nacimiento is not None:
+        doctor.fecha_nacimiento = fecha_nacimiento
+
+    if sexo is not None:
+        doctor.sexo = sexo
+
+    db.commit()
+    db.refresh(doctor)
+
+    return {
+        "mensaje": "Perfil actualizado correctamente"
+    }  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
