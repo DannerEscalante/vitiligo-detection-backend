@@ -43,3 +43,22 @@ def crear_doctor(
     db.refresh(doctor)
 
     return doctor
+
+
+@router.get("/perfil")
+def obtener_perfil_doctor(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor no encontrado")
+
+    return {
+        "nombre": doctor.nombre,
+        "fecha_nacimiento": doctor.fecha_nacimiento,
+        "sexo": doctor.sexo
+    }
