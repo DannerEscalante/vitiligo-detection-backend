@@ -17,5 +17,5 @@ class Paciente(Base):
     antecedentes = relationship("PacienteAntecedente")
     
     citas = relationship("Cita", back_populates="paciente", cascade="all, delete")
-    tratamientos = relationship("Tratamiento", back_populates="paciente", cascade="all, delete")
+    tratamientos = relationship("Tratamiento", back_populates="paciente")
     
