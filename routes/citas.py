@@ -21,49 +21,24 @@ def get_db():
 @router.post("/")
 def crear_cita(
     fecha_hora: datetime,
-    prediccion_id: int = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
-    paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+    paciente = db.query(Paciente).filter(
+        Paciente.usuario_id == int(usuario_id)
+    ).first()
 
     if not paciente:
-        raise HTTPException(status_code=403, detail="Solo pacientes pueden crear citas")
+        raise HTTPException(status_code=403, detail="Solo pacientes")
 
     if fecha_hora < datetime.utcnow():
         raise HTTPException(status_code=400, detail="No puedes agendar en el pasado")
 
     if fecha_hora.hour < 6 or fecha_hora.hour >= 22:
-        raise HTTPException(status_code=400, detail="Fuera de horario de atención")
-
-    # validar si el paciente ya tiene predicciones
-    tiene_predicciones = db.query(Prediccion)\
-        .join(Imagen)\
-        .filter(Imagen.paciente_id == paciente.id)\
-        .first()
-
-    # si no tiene ninguna predicción previa, obligar
-    if not tiene_predicciones and prediccion_id is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Debes realizar una predicción antes de agendar tu primera cita"
-        )
-
-    # si envía prediccion_id, validar que le pertenece
-    if prediccion_id:
-        pred = db.query(Prediccion)\
-            .join(Imagen)\
-            .filter(
-                Prediccion.id == prediccion_id,
-                Imagen.paciente_id == paciente.id
-            ).first()
-
-        if not pred:
-            raise HTTPException(status_code=403, detail="Predicción inválida")
+        raise HTTPException(status_code=400, detail="Fuera de horario")
 
     nueva_cita = Cita(
         paciente_id=paciente.id,
-        prediccion_id=prediccion_id,
         fecha_hora=fecha_hora,
         duracion=30,
         estado="pendiente",
