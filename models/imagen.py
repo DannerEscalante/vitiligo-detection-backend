@@ -17,3 +17,4 @@ class Imagen(Base):
     prediccion_id = Column(Integer, ForeignKey("predicciones.id"))
 
     prediccion = relationship("Prediccion", back_populates="imagen")
+    paciente = relationship("Paciente", back_populates="imagenes")
