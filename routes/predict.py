@@ -32,67 +32,77 @@ file_path = f"{UPLOAD_DIR}/{filename}"
 
 @router.post("/predict")
 async def predict(
+    tratamiento_id: int,
     imagen: UploadFile = File(...),
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
     try:
-
-        if not imagen:
-            raise HTTPException(status_code=400, detail="No se envió ninguna imagen")
-
-        if imagen.filename == "":
-            raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+        if not imagen or imagen.filename == "":
+            raise HTTPException(status_code=400, detail="Imagen inválida")
 
         if not imagen.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail="El archivo debe ser una imagen")
-        
+            raise HTTPException(status_code=400, detail="Debe ser una imagen")
+
         contenido = await imagen.read()
 
         if len(contenido) > 5 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="La imagen es demasiado grande (máx 5MB)")
+            raise HTTPException(status_code=400, detail="Máx 5MB")
 
-        
-        imagen.file = BytesIO(contenido)
-
-
-        paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
+        paciente = db.query(Paciente).filter(
+            Paciente.usuario_id == int(usuario_id)
+        ).first()
 
         if not paciente:
             raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-        file_path = f"{UPLOAD_DIR}/{imagen.filename}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(imagen.file, buffer)
+        # 🔥 guardar imagen
+        filename = f"{uuid.uuid4()}.jpg"
+        file_path = f"{UPLOAD_DIR}/{filename}"
 
+        with open(file_path, "wb") as f:
+            f.write(contenido)
 
         nueva_imagen = Imagen(
             paciente_id=paciente.id,
             url_imagen=file_path,
-            fecha_subida=datetime.utcnow()
+            fecha=datetime.utcnow()
         )
         db.add(nueva_imagen)
         db.commit()
         db.refresh(nueva_imagen)
 
-
+        # 🔥 predicción IA
         resultado = predecir_imagen(file_path)
 
-
         nueva_prediccion = Prediccion(
-            imagen_id=nueva_imagen.id,
+            tratamiento_id=tratamiento_id,
             resultado=resultado["diagnostico"],
-            confianza=resultado["confianza"],
-            fecha_prediccion=datetime.utcnow()
+            confianza=resultado["confianza"]
         )
+
         db.add(nueva_prediccion)
         db.commit()
+        db.refresh(nueva_prediccion)
 
+        # 🔗 conectar imagen con predicción
+        nueva_imagen.prediccion_id = nueva_prediccion.id
+        db.commit()
 
         return {
-            "usuario_id": usuario_id,
-            **resultado
+            "prediccion_id": nueva_prediccion.id,
+            "resultado": resultado["diagnostico"],
+            "confianza": resultado["confianza"]
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+    
+    
+    
+    
+    
+    
+    

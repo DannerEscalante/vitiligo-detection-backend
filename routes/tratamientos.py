@@ -6,6 +6,7 @@ from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
 
 from models import Tratamiento, Paciente, Doctor
+from models.historial_clinico import HistorialClinico
 
 router = APIRouter(prefix="/tratamientos", tags=["Tratamientos"])
 
@@ -20,26 +21,28 @@ def get_db():
 
 @router.post("/")
 def iniciar_tratamiento(
-    paciente_id: int,
+    historial_id: int,
     tipo_tratamiento_id: int,
-    descripcion: str = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
 
-    # 🔴 validar doctor
-    doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
     if not doctor:
-        raise HTTPException(status_code=403, detail="Solo doctores pueden iniciar tratamientos")
+        raise HTTPException(status_code=403, detail="Solo doctores")
 
-    # 🔴 validar paciente
-    paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
-    if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    historial = db.query(HistorialClinico).filter(
+        HistorialClinico.id == historial_id
+    ).first()
 
-    # 🔥 1. cerrar tratamiento activo si existe
+    if not historial:
+        raise HTTPException(status_code=404, detail="Historial no encontrado")
+
+    # cerrar tratamiento activo
     tratamiento_activo = db.query(Tratamiento).filter(
-        Tratamiento.paciente_id == paciente_id,
+        Tratamiento.paciente_id == historial.paciente_id,
         Tratamiento.estado == "activo"
     ).first()
 
@@ -47,18 +50,24 @@ def iniciar_tratamiento(
         tratamiento_activo.estado = "finalizado"
         tratamiento_activo.fecha_fin = datetime.utcnow()
 
-    # 🟢 2. crear nuevo tratamiento
-    nuevo_tratamiento = Tratamiento(
-        paciente_id=paciente_id,
+    nuevo = Tratamiento(
+        historial_id=historial.id,
+        paciente_id=historial.paciente_id,
         doctor_id=doctor.id,
         tipo_tratamiento_id=tipo_tratamiento_id,
         fecha_inicio=datetime.utcnow(),
-        estado="activo",
-        descripcion=descripcion
+        estado="activo"
     )
 
-    db.add(nuevo_tratamiento)
+    db.add(nuevo)
     db.commit()
-    db.refresh(nuevo_tratamiento)
+    db.refresh(nuevo)
 
-    return nuevo_tratamiento
+    return nuevo
+
+
+
+
+
+
+
