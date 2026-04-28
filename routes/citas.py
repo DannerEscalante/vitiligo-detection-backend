@@ -21,6 +21,7 @@ def get_db():
 @router.post("/")
 def crear_cita(
     fecha_hora: datetime,
+    prediccion_id: int = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
@@ -32,13 +33,25 @@ def crear_cita(
         raise HTTPException(status_code=403, detail="Solo pacientes")
 
     if fecha_hora < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="No puedes agendar en el pasado")
+        raise HTTPException(status_code=400, detail="Fecha inválida")
 
     if fecha_hora.hour < 6 or fecha_hora.hour >= 22:
         raise HTTPException(status_code=400, detail="Fuera de horario")
 
+    if prediccion_id:
+        pred = db.query(Prediccion)\
+            .join(Imagen)\
+            .filter(
+                Prediccion.id == prediccion_id,
+                Imagen.paciente_id == paciente.id
+            ).first()
+
+        if not pred:
+            raise HTTPException(status_code=403, detail="Predicción inválida")
+
     nueva_cita = Cita(
         paciente_id=paciente.id,
+        prediccion_id=prediccion_id,  # 🔥 clave
         fecha_hora=fecha_hora,
         duracion=30,
         estado="pendiente",
