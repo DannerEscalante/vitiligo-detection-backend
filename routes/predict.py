@@ -100,7 +100,69 @@ async def predict(
     
     
     
-    
+@router.post("/predict-inicial")
+async def predict_inicial(
+    imagen: UploadFile = File(...),
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    try:
+        if not imagen or imagen.filename == "":
+            raise HTTPException(status_code=400, detail="Imagen inválida")
+
+        if not imagen.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Debe ser imagen")
+
+        contenido = await imagen.read()
+
+        paciente = db.query(Paciente).filter(
+            Paciente.usuario_id == int(usuario_id)
+        ).first()
+
+        if not paciente:
+            raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+        # guardar imagen
+        filename = f"{uuid.uuid4()}.jpg"
+        file_path = f"{UPLOAD_DIR}/{filename}"
+
+        with open(file_path, "wb") as f:
+            f.write(contenido)
+
+        nueva_imagen = Imagen(
+            paciente_id=paciente.id,
+            url_imagen=file_path,
+            fecha=datetime.utcnow()
+        )
+        db.add(nueva_imagen)
+        db.commit()
+        db.refresh(nueva_imagen)
+
+        # predicción
+        resultado = predecir_imagen(file_path)
+
+        nueva_prediccion = Prediccion(
+            tratamiento_id=None,  # 🔥 clave
+            resultado=resultado["diagnostico"],
+            confianza=resultado["confianza"]
+        )
+
+        db.add(nueva_prediccion)
+        db.commit()
+        db.refresh(nueva_prediccion)
+
+        # relación
+        nueva_imagen.prediccion_id = nueva_prediccion.id
+        db.commit()
+
+        return {
+            "prediccion_id": nueva_prediccion.id,
+            "resultado": resultado["diagnostico"],
+            "confianza": resultado["confianza"]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))   
     
     
     
