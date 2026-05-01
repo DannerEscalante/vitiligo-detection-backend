@@ -142,7 +142,7 @@ async def predict_inicial(
         resultado = predecir_imagen(file_path)
 
         nueva_prediccion = Prediccion(
-            tratamiento_id=None,  # 🔥 clave
+            tratamiento_id=None,  
             resultado=resultado["diagnostico"],
             confianza=resultado["confianza"]
         )

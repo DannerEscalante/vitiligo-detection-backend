@@ -37,7 +37,7 @@ def login(datos: LoginSchema, db: Session = Depends(get_db)):
     }
 
 
-# REGISTER COMPLETO
+
 @router.post("/register-completo")
 def register_completo(
     email: str,
@@ -48,12 +48,10 @@ def register_completo(
     db: Session = Depends(get_db)
 ):
 
-    # verificar si ya existe
     existente = db.query(Usuario).filter(Usuario.email == email).first()
     if existente:
         raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
-    # crear usuario
     nuevo_usuario = Usuario(
         email=email,
         contrasena=hash_password(contrasena),
@@ -64,7 +62,6 @@ def register_completo(
     db.commit()
     db.refresh(nuevo_usuario)
 
-    # crear paciente
     paciente = Paciente(
         usuario_id=nuevo_usuario.id,
         nombre=nombre,
@@ -75,7 +72,6 @@ def register_completo(
     db.add(paciente)
     db.commit()
 
-    # generar token automático
     token = crear_token({"sub": str(nuevo_usuario.id)})
 
     return {

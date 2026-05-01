@@ -51,7 +51,7 @@ def crear_cita(
 
     nueva_cita = Cita(
         paciente_id=paciente.id,
-        prediccion_id=prediccion_id,  # 🔥 clave
+        prediccion_id=prediccion_id,
         fecha_hora=fecha_hora,
         duracion=30,
         estado="pendiente",
@@ -179,19 +179,14 @@ def cambiar_estado_cita(
 
     if not cita:
         raise HTTPException(status_code=404, detail="Cita no encontrada")
-
-    # no modificar si ya finalizada
     if cita.estado == "finalizada":
         raise HTTPException(status_code=400, detail="La cita ya está finalizada")
 
     doctor = db.query(Doctor).filter(Doctor.usuario_id == int(usuario_id)).first()
     paciente = db.query(Paciente).filter(Paciente.usuario_id == int(usuario_id)).first()
-
-    # validar estado permitido
     if estado not in ["pendiente", "confirmada", "cancelada", "finalizada"]:
         raise HTTPException(status_code=400, detail="Estado inválido")
 
-    # 🔵 SI ES DOCTOR
     if doctor:
         # no puede confirmar si está cancelada
         if estado == "confirmada" and cita.estado == "cancelada":
@@ -203,9 +198,7 @@ def cambiar_estado_cita(
 
         cita.estado = estado
 
-    # 🟢 SI ES PACIENTE
     elif paciente:
-        # solo puede cancelar sus propias citas
         if cita.paciente_id != paciente.id:
             raise HTTPException(status_code=403, detail="No puedes modificar esta cita")
 

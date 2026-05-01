@@ -53,7 +53,6 @@ def actualizar_usuario(
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # 🔴 validar email único
     if email:
         existente = db.query(Usuario).filter(Usuario.email == email).first()
         if existente and existente.id != usuario.id:
@@ -61,7 +60,6 @@ def actualizar_usuario(
 
         usuario.email = email
 
-    # 🔴 actualizar contraseña
     if contrasena:
         usuario.contrasena = hash_password(contrasena)
 

@@ -5,8 +5,10 @@ from datetime import datetime
 from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
 
-from models import Tratamiento, Paciente, Doctor
+from models import Tratamiento, Paciente, Doctor, cita
 from models.historial_clinico import HistorialClinico
+from models.prediccion import Prediccion
+from routes import historial
 
 router = APIRouter(prefix="/tratamientos", tags=["Tratamientos"])
 
@@ -45,10 +47,8 @@ def iniciar_tratamiento(
         Tratamiento.paciente_id == historial.paciente_id,
         Tratamiento.estado == "activo"
     ).first()
-
-    if tratamiento_activo:
-        tratamiento_activo.estado = "finalizado"
-        tratamiento_activo.fecha_fin = datetime.utcnow()
+    
+    
 
     nuevo = Tratamiento(
         historial_id=historial.id,
@@ -58,6 +58,21 @@ def iniciar_tratamiento(
         fecha_inicio=datetime.utcnow(),
         estado="activo"
     )
+    
+    #obtener la predicción inicial desde la cita
+    cita = historial.cita
+
+    if cita and cita.prediccion_id:
+        pred_inicial = db.query(Prediccion).filter(
+        Prediccion.id == cita.prediccion_id
+    ).first()
+
+    if pred_inicial:
+        pred_inicial.tratamiento_id = nuevo.id
+
+    if tratamiento_activo:
+        tratamiento_activo.estado = "finalizado"
+        tratamiento_activo.fecha_fin = datetime.utcnow()
 
     db.add(nuevo)
     db.commit()
@@ -67,7 +82,33 @@ def iniciar_tratamiento(
 
 
 
+@router.get("/activo")
+def obtener_tratamiento_activo(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    paciente = db.query(Paciente).filter(
+        Paciente.usuario_id == int(usuario_id)
+    ).first()
 
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    tratamiento = db.query(Tratamiento).filter(
+        Tratamiento.paciente_id == paciente.id,
+        Tratamiento.estado == "activo"
+    ).first()
+
+    if not tratamiento:
+        return {
+            "tiene_tratamiento": False,
+            "tratamiento_id": None
+        }
+
+    return {
+        "tiene_tratamiento": True,
+        "tratamiento_id": tratamiento.id
+    }
 
 
 
