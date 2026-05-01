@@ -30,6 +30,7 @@ def login(datos: LoginSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     token = crear_token({"sub": str(usuario.id)})
+    print("USUARIO EN LOGIN:", usuario.id, usuario.email)
 
     return {
         "access_token": token,
