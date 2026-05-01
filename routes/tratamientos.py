@@ -47,8 +47,10 @@ def iniciar_tratamiento(
         Tratamiento.paciente_id == historial.paciente_id,
         Tratamiento.estado == "activo"
     ).first()
-    
-    
+
+    if tratamiento_activo:
+        tratamiento_activo.estado = "finalizado"
+        tratamiento_activo.fecha_fin = datetime.utcnow()
 
     nuevo = Tratamiento(
         historial_id=historial.id,
@@ -58,28 +60,24 @@ def iniciar_tratamiento(
         fecha_inicio=datetime.utcnow(),
         estado="activo"
     )
-    
-    #obtener la predicción inicial desde la cita
-    cita = historial.cita
-
-    if cita and cita.prediccion_id:
-        pred_inicial = db.query(Prediccion).filter(
-        Prediccion.id == cita.prediccion_id
-    ).first()
-
-    if pred_inicial:
-        pred_inicial.tratamiento_id = nuevo.id
-
-    if tratamiento_activo:
-        tratamiento_activo.estado = "finalizado"
-        tratamiento_activo.fecha_fin = datetime.utcnow()
 
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
 
-    return nuevo
+    # asignar predicción inicial después de crear tratamiento
+    cita = historial.cita
 
+    if cita and cita.prediccion_id:
+        pred_inicial = db.query(Prediccion).filter(
+            Prediccion.id == cita.prediccion_id
+        ).first()
+
+        if pred_inicial:
+            pred_inicial.tratamiento_id = nuevo.id
+            db.commit()
+
+    return nuevo
 
 
 @router.get("/activo")
