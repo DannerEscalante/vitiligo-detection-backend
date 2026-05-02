@@ -7,6 +7,8 @@ from routes import citas
 from routes import tratamientos
 from routes import doctores
 from routes import pacientes
+from fastapi.staticfiles import StaticFiles
+
 
 
 
@@ -22,6 +24,8 @@ app.include_router(doctores.router)
 app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 
 @app.get("/")
 def read_root():

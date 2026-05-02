@@ -9,7 +9,7 @@ from models import Doctor, Cita, HistorialClinico, Prediccion
 from models.paciente import Paciente
 
 router = APIRouter(prefix="/historial-clinico", tags=["Historial Clínico"])
-
+BASE_URL = "http://37.60.231.27:8001"
 
 def get_db():
     db = SessionLocal()
@@ -102,7 +102,7 @@ def ver_historial_paciente(
                 tratamiento_data["predicciones"].append({
                     "resultado": p.resultado,
                     "confianza": float(p.confianza),
-                    "imagen": p.imagen.url_imagen if p.imagen else None
+                    "imagen": f"{BASE_URL}/{p.imagen.url_imagen}" if p.imagen else None
                 })
 
             data["tratamientos"].append(tratamiento_data)
