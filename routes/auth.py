@@ -2,12 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
+from models import usuario
 from models.usuario import Usuario
 from models.paciente import Paciente
 
 from app.schemas.auth import LoginSchema
 from core.security import verify_password, hash_password
-from core.jwt import crear_token
+from core.jwt import ALGORITHM, SECRET_KEY, crear_access_token, crear_refresh_token, crear_token
+from jose import jwt, JWTError
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
@@ -28,14 +31,45 @@ def login(datos: LoginSchema, db: Session = Depends(get_db)):
 
     if not usuario or not verify_password(datos.contrasena, usuario.contrasena):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
-
-    token = crear_token({"sub": str(usuario.id)})
+    
+    
+    access_token = crear_access_token({"sub": str(usuario.id)})
+    refresh_token = crear_refresh_token({"sub": str(usuario.id)})
     print("USUARIO EN LOGIN:", usuario.id, usuario.email)
 
     return {
-        "access_token": token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "rol_id": usuario.rol_id,
         "token_type": "bearer"
     }
+
+   
+   
+
+
+router = APIRouter()
+
+@router.post("/refresh")
+def refresh_token(refresh_token: str):
+
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Token inválido")
+
+        user_id = payload.get("sub")
+
+        new_access_token = crear_access_token({"sub": user_id})
+
+        return {
+            "access_token": new_access_token
+        }
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Refresh token inválido") 
+
 
 
 
@@ -73,11 +107,13 @@ def register_completo(
     db.add(paciente)
     db.commit()
 
-    token = crear_token({"sub": str(nuevo_usuario.id)})
+    access_token = crear_access_token({"sub": str(nuevo_usuario.id)})
+    refresh_token = crear_refresh_token({"sub": str(nuevo_usuario.id)})
 
     return {
-        "access_token": token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "usuario_id": nuevo_usuario.id,
-        "rol_id": nuevo_usuario.rol_id 
+        "rol_id": nuevo_usuario.rol_id
     }
