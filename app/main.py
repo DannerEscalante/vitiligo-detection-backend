@@ -8,10 +8,10 @@ from routes import tratamientos
 from routes import doctores
 from routes import pacientes
 from fastapi.staticfiles import StaticFiles
-
-
+import os
 
 app = FastAPI()
+
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(predict.router)
@@ -22,7 +22,15 @@ app.include_router(doctores.router)
 app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# 🔥 CORRECCIÓN CLAVE
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=os.path.join(BASE_DIR, "../uploads")),
+    name="uploads"
+)
 
 @app.get("/")
 def read_root():
@@ -31,6 +39,7 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "OK"}
+
 from core.database import SessionLocal
 
 @app.get("/test-db")
