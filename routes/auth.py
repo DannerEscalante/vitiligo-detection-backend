@@ -8,7 +8,7 @@ from models.paciente import Paciente
 
 from app.schemas.auth import LoginSchema
 from core.security import verify_password, hash_password
-from core.jwt import ALGORITHM, SECRET_KEY, crear_access_token, crear_refresh_token, crear_token
+from core.jwt import ALGORITHM, SECRET_KEY, crear_access_token, crear_refresh_token
 from jose import jwt, JWTError
 from fastapi import APIRouter, HTTPException
 
