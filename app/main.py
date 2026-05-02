@@ -24,7 +24,7 @@ app.include_router(doctores.router)
 app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 
 @app.get("/")
