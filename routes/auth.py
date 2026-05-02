@@ -48,7 +48,7 @@ def login(datos: LoginSchema, db: Session = Depends(get_db)):
    
 
 
-router = APIRouter()
+
 
 @router.post("/refresh")
 def refresh_token(refresh_token: str):
