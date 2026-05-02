@@ -8,7 +8,7 @@ from routes import tratamientos
 from routes import doctores
 from routes import pacientes
 from fastapi.staticfiles import StaticFiles
-import os
+
 
 
 
@@ -24,14 +24,7 @@ app.include_router(doctores.router)
 app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory=os.path.join(BASE_DIR, "../uploads")),
-    name="uploads"
-)
-
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def read_root():
