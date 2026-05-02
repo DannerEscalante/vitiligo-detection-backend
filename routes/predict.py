@@ -72,7 +72,7 @@ async def predict(
         db.commit()
         db.refresh(nueva_imagen)
 
-        # 🔥 predicción IA
+        # predicción IA
         resultado = predecir_imagen(file_path)
 
         nueva_prediccion = Prediccion(
@@ -85,7 +85,7 @@ async def predict(
         db.commit()
         db.refresh(nueva_prediccion)
 
-        # 🔗 conectar imagen con predicción
+        # conectar imagen con predicción
         nueva_imagen.prediccion_id = nueva_prediccion.id
         db.commit()
 
