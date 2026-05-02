@@ -32,7 +32,8 @@ file_path = f"{UPLOAD_DIR}/{filename}"
 
 @router.post("/predict")
 async def predict(
-    tratamiento_id: int,
+    tratamiento_id: int = None,
+    guardar: bool = True,
     imagen: UploadFile = File(...),
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
@@ -56,12 +57,25 @@ async def predict(
         if not paciente:
             raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-        # 🔥 guardar imagen
+        # guardar temporal SIEMPRE (para IA)
         filename = f"{uuid.uuid4()}.jpg"
         file_path = f"{UPLOAD_DIR}/{filename}"
 
         with open(file_path, "wb") as f:
             f.write(contenido)
+
+        # predicción IA
+        resultado = predecir_imagen(file_path)
+
+        # SI NO QUIERE GUARDAR → SOLO DEVOLVER
+        if not guardar:
+            return {
+                "prediccion_id": None,
+                "resultado": resultado["diagnostico"],
+                "confianza": resultado["confianza"]
+            }
+
+        # AQUÍ RECIÉN SE GUARDA EN DB
 
         nueva_imagen = Imagen(
             paciente_id=paciente.id,
@@ -71,9 +85,6 @@ async def predict(
         db.add(nueva_imagen)
         db.commit()
         db.refresh(nueva_imagen)
-
-        # predicción IA
-        resultado = predecir_imagen(file_path)
 
         nueva_prediccion = Prediccion(
             tratamiento_id=tratamiento_id,
@@ -85,7 +96,6 @@ async def predict(
         db.commit()
         db.refresh(nueva_prediccion)
 
-        # conectar imagen con predicción
         nueva_imagen.prediccion_id = nueva_prediccion.id
         db.commit()
 
