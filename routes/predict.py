@@ -10,6 +10,7 @@ import os
 from fastapi import HTTPException
 import uuid
 from io import BytesIO
+from fastapi import Form
 
 router = APIRouter()
 
@@ -18,6 +19,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def get_db():
     db = SessionLocal()
+    
     try:
         yield db
     finally:
@@ -33,7 +35,7 @@ file_path = f"{UPLOAD_DIR}/{filename}"
 @router.post("/predict")
 async def predict(
     tratamiento_id: int = None,
-    guardar: bool = True,
+    guardar: bool = Form(True),
     imagen: UploadFile = File(...),
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
