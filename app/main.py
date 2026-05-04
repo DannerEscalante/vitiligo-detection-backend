@@ -23,7 +23,7 @@ app.include_router(pacientes.router)
 
 Base.metadata.create_all(bind=engine)
 
-# 🔥 CORRECCIÓN CLAVE
+# CORRECCIÓN CLAVE
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app.mount(
