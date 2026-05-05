@@ -55,23 +55,35 @@ def predecir_imagen(path):
     if img is None:
         raise Exception("No se pudo leer la imagen")
 
-    img = mejorar_contraste(img)
+    # 🔥 IMPORTANTE: mantener BGR aquí
+    # porque la máscara usa HSV desde BGR
+
+    # 1. máscara primero (como en colab)
     img = aplicar_mascara_piel(img)
 
+    # 2. luego contraste
+    img = mejorar_contraste(img)
+
+    # 3. resize
     img = cv2.resize(img, (224, 224))
+
+    # 🔥 AHORA sí convertir a RGB
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
     img = np.array(img, dtype=np.float32)
 
+    # 4. preprocess
     img = preprocess_input(img)
     img = np.expand_dims(img, axis=0)
 
-    # 🔥 CAMBIO AQUÍ
     pred = model(img)
 
-    # ⚠️ TFSMLayer devuelve dict o tensor
     if isinstance(pred, dict):
         pred = list(pred.values())[0]
 
     pred = pred.numpy()[0][0]
+
+    print("PRED BACKEND:", pred)
 
     return {
         "diagnostico": "vitiligo" if pred > 0.5 else "no_vitiligo",
