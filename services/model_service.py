@@ -1,66 +1,60 @@
-import tensorflow as tf
 import numpy as np
 import cv2
-from tensorflow.keras.applications import EfficientNetB0
+import os
+from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.efficientnet import preprocess_input
-from tensorflow.keras import layers, models
 
-MODEL_WEIGHTS = "models_ml/pesos_vitiligo.weights.h5"
+# 🔹 RUTA DEL MODELO
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.keras")
 
-modelo = None
+# 🔹 CARGA UNA SOLA VEZ
+model = load_model(MODEL_PATH)
 
+# -----------------------------
+# PREPROCESAMIENTO
+# -----------------------------
 
-def construir_modelo():
-    base_model = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(224,224,3))
-    base_model.trainable = False
+def aplicar_mascara_piel(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array([0, 20, 70], dtype=np.uint8)
+    upper = np.array([20, 255, 255], dtype=np.uint8)
+    mask = cv2.inRange(hsv, lower, upper)
+    return cv2.bitwise_and(img, img, mask=mask)
 
-    model = models.Sequential([
-        base_model,
-        layers.GlobalAveragePooling2D(),
-        layers.BatchNormalization(),
-        layers.Dropout(0.4),
-        layers.Dense(256, activation='relu'),
-        layers.Dropout(0.3),
-        layers.Dense(1, activation='sigmoid')
-    ])
+def mejorar_contraste(img):
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
 
-    return model
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    l = clahe.apply(l)
 
+    lab = cv2.merge((l, a, b))
+    return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
-def cargar_modelo():
-    global modelo
-    if modelo is None:
-        try:
-            modelo = construir_modelo()
-            modelo.load_weights(MODEL_WEIGHTS)
-        except Exception:
-            raise Exception("Error cargando el modelo")
-    return modelo
+# -----------------------------
+# FUNCIÓN PRINCIPAL
+# -----------------------------
 
+def predecir_imagen(path):
+    img = cv2.imread(path)
 
-def predecir_imagen(ruta_imagen):
-    from PIL import Image
+    if img is None:
+        raise Exception("No se pudo leer la imagen")
 
-    
-    model = cargar_modelo()
+    # 🔹 MISMO pipeline que entrenamiento
+    img = mejorar_contraste(img)
+    img = aplicar_mascara_piel(img)
 
-    img = Image.open(ruta_imagen).convert("RGB")
-    img = img.resize((224, 224))
+    img = cv2.resize(img, (224, 224))
+    img = np.array(img, dtype=np.float32)
 
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    img = preprocess_input(img)
+    img = np.expand_dims(img, axis=0)
 
-    pred = model.predict(img_array)[0][0]
-
-    if pred >= 0.5:
-        diagnostico = "VITÍLIGO DETECTADO"
-        confianza = float(pred * 100)
-    else:
-        diagnostico = "NO VITÍLIGO"
-        confianza = float((1 - pred) * 100)
+    pred = model.predict(img, verbose=0)[0][0]
 
     return {
-        "probabilidad": float(pred),
-        "diagnostico": diagnostico,
-        "confianza": confianza
+        "diagnostico": "vitiligo" if pred > 0.5 else "no_vitiligo",
+        "confianza": float(pred)
     }
