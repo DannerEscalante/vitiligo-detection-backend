@@ -6,7 +6,7 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # 🔹 RUTA DEL MODELO
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.h5")
 
 # 🔹 CARGA UNA SOLA VEZ
 model = load_model(MODEL_PATH)
