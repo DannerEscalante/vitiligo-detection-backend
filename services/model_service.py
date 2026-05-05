@@ -100,9 +100,16 @@ def predecir_imagen(path):
 
     print("PRED BACKEND:", pred)
 
+    if pred >= 0.5:
+        diagnostico = "vitiligo"
+        confianza = float(pred)
+    else:
+        diagnostico = "no_vitiligo"
+        confianza = float(1 - pred)
+
     return {
-        "diagnostico": "vitiligo" if pred > 0.5 else "no_vitiligo",
-        "confianza": float(pred)
+        "diagnostico": diagnostico,
+        "confianza": confianza
     }
 
 
