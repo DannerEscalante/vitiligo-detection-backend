@@ -1,54 +1,25 @@
 import numpy as np
 import cv2
 import os
-
-from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.efficientnet import preprocess_input
-from tensorflow.keras import layers, models, regularizers
 
 # -----------------------------
-# 🔹 RUTA DE PESOS
+# 🔹 RUTA DEL MODELO
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WEIGHTS_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_pesos.weights.h5")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.keras")
 
-# -----------------------------
-# 🔹 CONSTRUIR MODELO (MISMA ARQUITECTURA QUE ENTRENAMIENTO)
-# -----------------------------
-def construir_modelo():
-    base_model = EfficientNetB0(
-        weights="imagenet",
-        include_top=False,
-        input_shape=(224, 224, 3)
-    )
-
-    base_model.trainable = False
-
-    x = base_model.output
-    x = layers.GlobalAveragePooling2D()(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.6)(x)
-
-    x = layers.Dense(
-        128,
-        activation="relu",
-        kernel_regularizer=regularizers.l2(0.02)
-    )(x)
-
-    x = layers.BatchNormalization()(x)
-    x = layers.Dropout(0.5)(x)
-
-    outputs = layers.Dense(1, activation="sigmoid")(x)
-
-    model = models.Model(inputs=base_model.input, outputs=outputs)
-
-    return model
+modelo = None
 
 # -----------------------------
 # 🔹 CARGAR MODELO UNA SOLA VEZ
 # -----------------------------
-model = construir_modelo()
-model.load_weights(WEIGHTS_PATH)
+def cargar_modelo():
+    global modelo
+    if modelo is None:
+        modelo = load_model(MODEL_PATH, compile=False)
+    return modelo
 
 # -----------------------------
 # 🔹 PREPROCESAMIENTO
@@ -74,12 +45,13 @@ def mejorar_contraste(img):
 # 🔹 FUNCIÓN PRINCIPAL
 # -----------------------------
 def predecir_imagen(path):
+    model = cargar_modelo()
+
     img = cv2.imread(path)
 
     if img is None:
         raise Exception("No se pudo leer la imagen")
 
-    # 🔥 MISMO PIPELINE QUE ENTRENAMIENTO
     img = mejorar_contraste(img)
     img = aplicar_mascara_piel(img)
 
