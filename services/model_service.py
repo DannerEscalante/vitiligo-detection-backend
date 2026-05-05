@@ -1,20 +1,58 @@
 import numpy as np
 import cv2
 import os
-from tensorflow.keras.models import load_model
+
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.applications.efficientnet import preprocess_input
+from tensorflow.keras import layers, models, regularizers
 
-# 🔹 RUTA DEL MODELO
+# -----------------------------
+# 🔹 RUTA DE PESOS
+# -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.h5")
-
-# 🔹 CARGA UNA SOLA VEZ
-model = load_model(MODEL_PATH)
+WEIGHTS_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_pesos.weights.h5")
 
 # -----------------------------
-# PREPROCESAMIENTO
+# 🔹 CONSTRUIR MODELO (MISMA ARQUITECTURA QUE ENTRENAMIENTO)
 # -----------------------------
+def construir_modelo():
+    base_model = EfficientNetB0(
+        weights="imagenet",
+        include_top=False,
+        input_shape=(224, 224, 3)
+    )
 
+    base_model.trainable = False
+
+    x = base_model.output
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.6)(x)
+
+    x = layers.Dense(
+        128,
+        activation="relu",
+        kernel_regularizer=regularizers.l2(0.02)
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.5)(x)
+
+    outputs = layers.Dense(1, activation="sigmoid")(x)
+
+    model = models.Model(inputs=base_model.input, outputs=outputs)
+
+    return model
+
+# -----------------------------
+# 🔹 CARGAR MODELO UNA SOLA VEZ
+# -----------------------------
+model = construir_modelo()
+model.load_weights(WEIGHTS_PATH)
+
+# -----------------------------
+# 🔹 PREPROCESAMIENTO
+# -----------------------------
 def aplicar_mascara_piel(img):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower = np.array([0, 20, 70], dtype=np.uint8)
@@ -33,16 +71,15 @@ def mejorar_contraste(img):
     return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 # -----------------------------
-# FUNCIÓN PRINCIPAL
+# 🔹 FUNCIÓN PRINCIPAL
 # -----------------------------
-
 def predecir_imagen(path):
     img = cv2.imread(path)
 
     if img is None:
         raise Exception("No se pudo leer la imagen")
 
-    # 🔹 MISMO pipeline que entrenamiento
+    # 🔥 MISMO PIPELINE QUE ENTRENAMIENTO
     img = mejorar_contraste(img)
     img = aplicar_mascara_piel(img)
 
