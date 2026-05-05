@@ -8,7 +8,7 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 # 🔹 RUTA DEL MODELO
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_final_limpio_otravez.h5")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.keras")
 
 modelo = None
 
@@ -18,7 +18,7 @@ modelo = None
 def cargar_modelo():
     global modelo
     if modelo is None:
-        modelo = load_model(MODEL_PATH, compile=False)
+        modelo = load_model(MODEL_PATH, compile=False, safe_mode=False)
     return modelo
 
 # -----------------------------
