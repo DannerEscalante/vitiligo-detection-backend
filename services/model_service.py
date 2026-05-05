@@ -5,10 +5,10 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # -----------------------------
-# 🔹 RUTA DEL MODELO
+# 🔹 RUTA DEL MODELO (CARPETA)
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_vitiligo_final.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
 
 modelo = None
 
@@ -18,7 +18,7 @@ modelo = None
 def cargar_modelo():
     global modelo
     if modelo is None:
-        modelo = load_model(MODEL_PATH, compile=False, safe_mode=False)
+        modelo = load_model(MODEL_PATH)  # 🔥 sin safe_mode, sin compile
     return modelo
 
 # -----------------------------
