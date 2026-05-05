@@ -27,22 +27,36 @@ def cargar_modelo():
 # -----------------------------
 # 🔹 PREPROCESAMIENTO
 # -----------------------------
-def aplicar_mascara_piel(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower = np.array([0, 20, 70], dtype=np.uint8)
-    upper = np.array([20, 255, 255], dtype=np.uint8)
-    mask = cv2.inRange(hsv, lower, upper)
-    return cv2.bitwise_and(img, img, mask=mask)
-
-def mejorar_contraste(img):
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+def mejorar_contraste(img_rgb):
+    lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
     l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    l_eq = clahe.apply(l)
+    lab_eq = cv2.merge((l_eq, a, b))
+    return cv2.cvtColor(lab_eq, cv2.COLOR_LAB2RGB)
 
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    l = clahe.apply(l)
 
-    lab = cv2.merge((l, a, b))
-    return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+def aplicar_mascara_piel(img_rgb):
+    img_cont = mejorar_contraste(img_rgb)
+    hsv = cv2.cvtColor(img_cont, cv2.COLOR_RGB2HSV)
+
+    lower = np.array([0, 0, 20], dtype=np.uint8)
+    upper = np.array([40, 255, 255], dtype=np.uint8)
+
+    mask = cv2.inRange(hsv, lower, upper)
+
+    kernel = np.ones((7,7), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+
+    mask_final = np.zeros_like(mask)
+    for i in range(1, num_labels):
+        if stats[i, cv2.CC_STAT_AREA] > 2000:
+            mask_final[labels == i] = 255
+
+    return cv2.bitwise_and(img_cont, img_cont, mask=mask_final)
 
 # -----------------------------
 # 🔹 FUNCIÓN PRINCIPAL
@@ -55,28 +69,29 @@ def predecir_imagen(path):
     if img is None:
         raise Exception("No se pudo leer la imagen")
 
-    # 🔥 IMPORTANTE: mantener BGR aquí
-    # porque la máscara usa HSV desde BGR
-
-    # 1. máscara primero (como en colab)
-    img = aplicar_mascara_piel(img)
-
-    # 2. luego contraste
-    img = mejorar_contraste(img)
-
-    # 3. resize
-    img = cv2.resize(img, (224, 224))
-
-    # 🔥 AHORA sí convertir a RGB
+    # 🔥 1. BGR → RGB
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    img = np.array(img, dtype=np.float32)
+    # 🔥 2. resize
+    img_resized = cv2.resize(img, (224, 224))
 
-    # 4. preprocess
-    img = preprocess_input(img)
-    img = np.expand_dims(img, axis=0)
+    # 🔥 3. preprocess_input
+    x_norm = preprocess_input(img_resized.astype(np.float32))
 
-    pred = model(img)
+    # 🔥 4. revertir (CLAVE)
+    mean = np.array([123.68, 116.779, 103.939])
+    x_rev = x_norm + mean
+    x_rev = np.clip(x_rev, 0, 255).astype(np.uint8)
+
+    # 🔥 5. máscara EXACTA
+    img_masked = aplicar_mascara_piel(x_rev)
+
+    # 🔥 6. preprocess otra vez
+    img_final = preprocess_input(img_masked.astype(np.float32))
+    img_batch = np.expand_dims(img_final, axis=0)
+
+    # 🔥 7. predicción (TFSMLayer)
+    pred = model(img_batch)
 
     if isinstance(pred, dict):
         pred = list(pred.values())[0]
@@ -89,3 +104,7 @@ def predecir_imagen(path):
         "diagnostico": "vitiligo" if pred > 0.5 else "no_vitiligo",
         "confianza": float(pred)
     }
+
+
+
+
