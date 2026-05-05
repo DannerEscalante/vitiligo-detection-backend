@@ -1,11 +1,11 @@
 import numpy as np
 import cv2
 import os
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # -----------------------------
-# 🔹 RUTA DEL MODELO (CARPETA)
+# 🔹 RUTA DEL MODELO
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
@@ -13,12 +13,15 @@ MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
 modelo = None
 
 # -----------------------------
-# 🔹 CARGAR MODELO UNA SOLA VEZ
+# 🔹 CARGAR MODELO (KERAS 3)
 # -----------------------------
 def cargar_modelo():
     global modelo
     if modelo is None:
-        modelo = load_model(MODEL_PATH)  # 🔥 sin safe_mode, sin compile
+        modelo = tf.keras.layers.TFSMLayer(
+            MODEL_PATH,
+            call_endpoint="serving_default"
+        )
     return modelo
 
 # -----------------------------
@@ -61,7 +64,14 @@ def predecir_imagen(path):
     img = preprocess_input(img)
     img = np.expand_dims(img, axis=0)
 
-    pred = model.predict(img, verbose=0)[0][0]
+    # 🔥 CAMBIO AQUÍ
+    pred = model(img)
+
+    # ⚠️ TFSMLayer devuelve dict o tensor
+    if isinstance(pred, dict):
+        pred = list(pred.values())[0]
+
+    pred = pred.numpy()[0][0]
 
     return {
         "diagnostico": "vitiligo" if pred > 0.5 else "no_vitiligo",
