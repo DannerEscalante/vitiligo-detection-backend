@@ -129,10 +129,11 @@ def confirmar_cita(
 
     return cita
 
-# VER CITAS DEL DOCTOR
-
-@router.get("/doctor")
-def ver_citas_doctor(
+# -------------------------------
+# CITAS DE HOY DEL DOCTOR
+# -------------------------------
+@router.get("/doctor/hoy")
+def ver_citas_hoy_doctor(
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
@@ -141,28 +142,128 @@ def ver_citas_doctor(
     ).first()
 
     if not doctor:
-        raise HTTPException(status_code=403, detail="Solo doctores pueden ver sus citas")
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores pueden ver sus citas"
+        )
+
+    ahora = datetime.utcnow()
+
+    inicio_hoy = datetime.combine(
+        ahora.date(),
+        datetime.min.time()
+    )
+
+    fin_hoy = datetime.combine(
+        ahora.date(),
+        datetime.max.time()
+    )
 
     citas = db.query(Cita).filter(
-        (Cita.doctor_id == doctor.id) | (Cita.doctor_id == None)
+        Cita.doctor_id == doctor.id,
+        Cita.estado == "confirmada",
+        Cita.fecha_hora >= inicio_hoy,
+        Cita.fecha_hora <= fin_hoy
+    ).order_by(
+        Cita.fecha_hora.asc()
     ).all()
 
     resultado = []
 
     for c in citas:
+
         data = {
             "id": c.id,
             "fecha_hora": c.fecha_hora,
             "estado": c.estado,
             "duracion": c.duracion,
-            "paciente_id": c.paciente_id
+
+            "paciente": {
+                "id": c.paciente.id,
+                "nombre": c.paciente.nombre
+            },
+
+            "prediccion": None
         }
 
         if c.prediccion:
+
             data["prediccion"] = {
                 "resultado": c.prediccion.resultado,
                 "confianza": float(c.prediccion.confianza),
-                "imagen": c.prediccion.imagen.url_imagen if c.prediccion.imagen else None
+                "imagen": (
+                    c.prediccion.imagen.url_imagen
+                    if c.prediccion.imagen
+                    else None
+                )
+            }
+
+        resultado.append(data)
+
+    return resultado
+
+
+# -------------------------------
+# PRÓXIMAS CITAS DEL DOCTOR
+# -------------------------------
+@router.get("/doctor/proximas")
+def ver_citas_proximas_doctor(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores pueden ver sus citas"
+        )
+
+    ahora = datetime.utcnow()
+
+    fin_hoy = datetime.combine(
+        ahora.date(),
+        datetime.max.time()
+    )
+
+    citas = db.query(Cita).filter(
+        Cita.doctor_id == doctor.id,
+        Cita.estado == "confirmada",
+        Cita.fecha_hora > fin_hoy
+    ).order_by(
+        Cita.fecha_hora.asc()
+    ).all()
+
+    resultado = []
+
+    for c in citas:
+
+        data = {
+            "id": c.id,
+            "fecha_hora": c.fecha_hora,
+            "estado": c.estado,
+            "duracion": c.duracion,
+
+            "paciente": {
+                "id": c.paciente.id,
+                "nombre": c.paciente.nombre
+            },
+
+            "prediccion": None
+        }
+
+        if c.prediccion:
+
+            data["prediccion"] = {
+                "resultado": c.prediccion.resultado,
+                "confianza": float(c.prediccion.confianza),
+                "imagen": (
+                    c.prediccion.imagen.url_imagen
+                    if c.prediccion.imagen
+                    else None
+                )
             }
 
         resultado.append(data)
