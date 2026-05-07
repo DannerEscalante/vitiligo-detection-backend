@@ -271,6 +271,52 @@ def ver_citas_proximas_doctor(
     return resultado
 
 
+
+# -------------------------------
+# OBTENER PACIENTE DE UNA CITA
+# -------------------------------
+@router.get("/{cita_id}/paciente")
+def obtener_paciente_de_cita(
+    cita_id: int,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    cita = db.query(Cita).filter(
+        Cita.id == cita_id,
+        Cita.doctor_id == doctor.id
+    ).first()
+
+    if not cita:
+        raise HTTPException(
+            status_code=404,
+            detail="Cita no encontrada"
+        )
+
+    paciente = cita.paciente
+
+    return {
+        "id": paciente.id,
+        "nombre": paciente.nombre,
+        "fecha_nacimiento": paciente.fecha_nacimiento,
+        "sexo": paciente.sexo
+    }
+
+
+
+
+
+
+
 # -------------------------------
 # VER MIS CITAS
 # -------------------------------
