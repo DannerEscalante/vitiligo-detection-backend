@@ -121,6 +121,73 @@ def obtener_tratamiento_activo(
     }
 
 
+@router.get("/activo/paciente/{paciente_id}")
+def obtener_tratamiento_activo_paciente(
+
+    paciente_id: int,
+
+    usuario_id: str = Depends(obtener_usuario_actual),
+
+    db: Session = Depends(get_db)
+):
+
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=404,
+            detail="Doctor no encontrado"
+        )
+
+    paciente = db.query(Paciente).filter(
+        Paciente.id == paciente_id
+    ).first()
+
+    if not paciente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente no encontrado"
+        )
+
+    tratamiento = db.query(Tratamiento).filter(
+
+        Tratamiento.paciente_id == paciente.id,
+
+        Tratamiento.estado == "activo"
+
+    ).first()
+
+    if not tratamiento:
+
+        return {
+            "tiene_tratamiento": False,
+            "tratamiento_id": None,
+            "tipo_tratamiento": None,
+            "fecha_inicio": None,
+            "estado": None,
+            "notas": None
+        }
+
+    return {
+
+        "tiene_tratamiento": True,
+
+        "tratamiento_id": tratamiento.id,
+
+        "tipo_tratamiento":
+            tratamiento.tipo_tratamiento.nombre,
+
+        "fecha_inicio": tratamiento.fecha_inicio,
+
+        "estado": tratamiento.estado,
+
+        "notas": tratamiento.notas
+    }
+
+
+
 
 # -------------------------------
 # ACTUALIZAR NOTAS DEL TRATAMIENTO
