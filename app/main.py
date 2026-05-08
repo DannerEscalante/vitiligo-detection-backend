@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from models import *
 from core.database import Base, engine
-from routes import users, auth, predict
+from routes import tipos_tratamiento, users, auth, predict
 from routes import historial
 from routes import citas
 from routes import tratamientos
@@ -20,6 +20,9 @@ app.include_router(citas.router)
 app.include_router(tratamientos.router)
 app.include_router(doctores.router)
 app.include_router(pacientes.router)
+app.include_router(tipos_tratamiento.router)
+
+
 
 Base.metadata.create_all(bind=engine)
 

@@ -90,7 +90,10 @@ def obtener_tratamiento_activo(
     ).first()
 
     if not paciente:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente no encontrado"
+        )
 
     tratamiento = db.query(Tratamiento).filter(
         Tratamiento.paciente_id == paciente.id,
@@ -98,15 +101,117 @@ def obtener_tratamiento_activo(
     ).first()
 
     if not tratamiento:
+
         return {
             "tiene_tratamiento": False,
-            "tratamiento_id": None
+            "tratamiento_id": None,
+            "tipo_tratamiento": None,
+            "fecha_inicio": None,
+            "estado": None,
+            "notas": None
         }
 
     return {
         "tiene_tratamiento": True,
-        "tratamiento_id": tratamiento.id
+        "tratamiento_id": tratamiento.id,
+        "tipo_tratamiento": tratamiento.tipo_tratamiento.nombre,
+        "fecha_inicio": tratamiento.fecha_inicio,
+        "estado": tratamiento.estado,
+        "notas": tratamiento.notas
     }
+
+
+
+# -------------------------------
+# ACTUALIZAR NOTAS DEL TRATAMIENTO
+# -------------------------------
+@router.patch("/{tratamiento_id}/notas")
+def actualizar_notas_tratamiento(
+    tratamiento_id: int,
+    notas: str,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    tratamiento = db.query(Tratamiento).filter(
+        Tratamiento.id == tratamiento_id
+    ).first()
+
+    if not tratamiento:
+        raise HTTPException(
+            status_code=404,
+            detail="Tratamiento no encontrado"
+        )
+
+    tratamiento.notas = notas
+
+    db.commit()
+    db.refresh(tratamiento)
+
+    return {
+        "mensaje": "Notas actualizadas correctamente"
+    }
+
+
+# -------------------------------
+# FINALIZAR TRATAMIENTO
+# -------------------------------
+@router.patch("/{tratamiento_id}/finalizar")
+def finalizar_tratamiento(
+    tratamiento_id: int,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    tratamiento = db.query(Tratamiento).filter(
+        Tratamiento.id == tratamiento_id
+    ).first()
+
+    if not tratamiento:
+        raise HTTPException(
+            status_code=404,
+            detail="Tratamiento no encontrado"
+        )
+
+    if tratamiento.estado == "finalizado":
+        raise HTTPException(
+            status_code=400,
+            detail="El tratamiento ya está finalizado"
+        )
+
+    tratamiento.estado = "finalizado"
+    tratamiento.fecha_fin = datetime.utcnow()
+
+    db.commit()
+    db.refresh(tratamiento)
+
+    return {
+        "mensaje": "Tratamiento finalizado correctamente"
+    }
+
+
+
+
+
+
 
 
 

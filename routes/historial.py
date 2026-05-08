@@ -131,4 +131,93 @@ def ver_historial_doctor(
 
 
 
+@router.get("/doctor/paciente/{paciente_id}")
+def ver_historial_paciente_desde_doctor(
+    paciente_id: int,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    paciente = db.query(Paciente).filter(
+        Paciente.id == paciente_id
+    ).first()
+
+    if not paciente:
+        raise HTTPException(
+            status_code=404,
+            detail="Paciente no encontrado"
+        )
+
+    historiales = db.query(HistorialClinico).filter(
+        HistorialClinico.paciente_id == paciente.id
+    ).order_by(
+        HistorialClinico.fecha.desc()
+    ).all()
+
+    resultado = []
+
+    for h in historiales:
+
+        data = {
+            "id": h.id,
+            "fecha": h.fecha,
+            "diagnostico": h.diagnostico,
+            "tratamientos": []
+        }
+
+        for t in h.tratamientos:
+
+            tratamiento_data = {
+                "id": t.id,
+                "tipo_tratamiento": (
+                    t.tipo_tratamiento.nombre
+                    if t.tipo_tratamiento
+                    else None
+                ),
+                "estado": t.estado,
+                "fecha_inicio": t.fecha_inicio,
+                "fecha_fin": t.fecha_fin,
+                "notas": t.notas,
+                "predicciones": []
+            }
+
+            for p in t.predicciones:
+
+                tratamiento_data["predicciones"].append({
+                    "resultado": p.resultado,
+                    "confianza": float(p.confianza),
+                    "imagen": (
+                        f"{BASE_URL}/{p.imagen.url_imagen}"
+                        if p.imagen
+                        else None
+                    ),
+                    "fecha": (
+                        p.imagen.fecha
+                        if p.imagen
+                        else None
+                    )
+                })
+
+            data["tratamientos"].append(
+                tratamiento_data
+            )
+
+        resultado.append(data)
+
+    return resultado
+
+
+
+
+
+
 
