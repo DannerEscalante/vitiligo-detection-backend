@@ -43,7 +43,7 @@ def obtener_disponibilidad(
 
     # obtener citas confirmadas de ese día
     citas_confirmadas = db.query(Cita).filter(
-        Cita.estado == "confirmada",
+        Cita.estado.in_(["pendiente", "confirmada"]),
         Cita.fecha_hora >= inicio_dia,
         Cita.fecha_hora < fin_dia
     ).all()

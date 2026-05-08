@@ -187,8 +187,6 @@ def obtener_tratamiento_activo_paciente(
     }
 
 
-
-
 # -------------------------------
 # ACTUALIZAR NOTAS DEL TRATAMIENTO
 # -------------------------------

@@ -393,3 +393,55 @@ def cambiar_estado_cita(
     db.refresh(cita)
 
     return cita
+
+
+# -------------------------------
+# COMPLETAR CITA
+# -------------------------------
+@router.patch("/{cita_id}/completar")
+def completar_cita(
+    cita_id: int,
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    cita = db.query(Cita).filter(
+        Cita.id == cita_id,
+        Cita.doctor_id == doctor.id
+    ).first()
+
+    if not cita:
+        raise HTTPException(
+            status_code=404,
+            detail="Cita no encontrada"
+        )
+
+    if cita.estado == "cancelada":
+        raise HTTPException(
+            status_code=400,
+            detail="No puedes completar una cita cancelada"
+        )
+
+    if cita.estado == "finalizada":
+        raise HTTPException(
+            status_code=400,
+            detail="La cita ya fue completada"
+        )
+
+    cita.estado = "finalizada"
+
+    db.commit()
+    db.refresh(cita)
+
+    return {
+        "mensaje": "Cita completada correctamente"
+    }
