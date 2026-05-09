@@ -5,6 +5,8 @@ from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
 
 from models import Doctor, Usuario
+from models.historial_clinico import HistorialClinico
+from models.tratamiento import Tratamiento
 
 router = APIRouter(prefix="/doctores", tags=["Doctores"])
 
@@ -95,7 +97,52 @@ def actualizar_perfil_doctor(
     }  
     
     
-    
+# -------------------------------
+# PACIENTES DEL DOCTOR
+# -------------------------------
+@router.get("/doctor")
+def obtener_pacientes_doctor(
+    usuario_id: str = Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(
+        Doctor.usuario_id == int(usuario_id)
+    ).first()
+
+    if not doctor:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores"
+        )
+
+    historiales = db.query(HistorialClinico).filter(
+        HistorialClinico.doctor_id == doctor.id
+    ).all()
+
+    pacientes_unicos = {}
+
+    for h in historiales:
+
+        paciente = h.paciente
+
+        if paciente.id not in pacientes_unicos:
+
+            tratamiento_activo = db.query(Tratamiento).filter(
+                Tratamiento.paciente_id == paciente.id,
+                Tratamiento.estado == "activo"
+            ).first()
+
+            pacientes_unicos[paciente.id] = {
+                "id": paciente.id,
+                "nombre": paciente.nombre,
+                "sexo": paciente.sexo,
+                "fecha_nacimiento": paciente.fecha_nacimiento,
+                "tratamiento_activo": (
+                    True if tratamiento_activo else False
+                )
+            }
+
+    return list(pacientes_unicos.values())    
     
     
     
