@@ -22,25 +22,40 @@ def get_db():
 @router.post("/")
 def crear_doctor(
     nombre: str,
+    fecha_nacimiento: str,
+    sexo: str,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
-    usuario = db.query(Usuario).filter(Usuario.id == int(usuario_id)).first()
+    usuario = db.query(Usuario).filter(
+        Usuario.id == int(usuario_id)
+    ).first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
 
-    existente = db.query(Doctor).filter(Doctor.usuario_id == usuario.id).first()
+    existente = db.query(Doctor).filter(
+        Doctor.usuario_id == usuario.id
+    ).first()
 
     if existente:
-        raise HTTPException(status_code=400, detail="El doctor ya existe")
+        raise HTTPException(
+            status_code=400,
+            detail="El doctor ya existe"
+        )
 
     doctor = Doctor(
         usuario_id=usuario.id,
-        nombre=nombre
+        nombre=nombre,
+        fecha_nacimiento=fecha_nacimiento,
+        sexo=sexo
     )
 
     db.add(doctor)
+
     db.commit()
     db.refresh(doctor)
 
@@ -61,15 +76,15 @@ def obtener_perfil_doctor(
     return {
         "id": doctor.id,
         "nombre": doctor.nombre,
+        "email": doctor.usuario.email,
         "fecha_nacimiento": doctor.fecha_nacimiento,
         "sexo": doctor.sexo
     }
     
 @router.put("/perfil")
 def actualizar_perfil_doctor(
-    nombre: str = None,
-    fecha_nacimiento: str = None,
-    sexo: str = None,
+    email: str = None,
+    contrasena: str = None,
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
@@ -78,24 +93,45 @@ def actualizar_perfil_doctor(
     ).first()
 
     if not doctor:
-        raise HTTPException(status_code=404, detail="Doctor no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Doctor no encontrado"
+        )
 
-    if nombre is not None:
-        doctor.nombre = nombre
+    usuario = db.query(Usuario).filter(
+        Usuario.id == doctor.usuario_id
+    ).first()
 
-    if fecha_nacimiento is not None:
-        doctor.fecha_nacimiento = fecha_nacimiento
+    if not usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
 
-    if sexo is not None:
-        doctor.sexo = sexo
+    if email:
+
+        existente = db.query(Usuario).filter(
+            Usuario.email == email
+        ).first()
+
+        if existente and existente.id != usuario.id:
+            raise HTTPException(
+                status_code=400,
+                detail="El email ya está en uso"
+            )
+
+        usuario.email = email
+
+    if contrasena:
+
+        usuario.contrasena = hash_password(contrasena)
 
     db.commit()
-    db.refresh(doctor)
+    db.refresh(usuario)
 
     return {
         "mensaje": "Perfil actualizado correctamente"
-    }  
-    
+    }
     
 # -------------------------------
 # PACIENTES DEL DOCTOR

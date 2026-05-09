@@ -63,6 +63,7 @@ def obtener_perfil_paciente(
     return {
         "id": paciente.id,
         "nombre": paciente.nombre,
+        "email": paciente.usuario.email,
         "fecha_nacimiento": paciente.fecha_nacimiento,
         "sexo": paciente.sexo
     }
