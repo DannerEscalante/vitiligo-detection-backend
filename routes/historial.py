@@ -91,7 +91,6 @@ def ver_historial_paciente(
         for t in h.tratamientos:
             tratamiento_data = {
                 "id": t.id,
-                "tipo_tratamiento": t.tipo_tratamiento.nombre if t.tipo_tratamiento else None,
                 "estado": t.estado,
                 "fecha_inicio": t.fecha_inicio,
                 "fecha_fin": t.fecha_fin,
