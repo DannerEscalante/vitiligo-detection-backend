@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
+from core.security import verify_password, hash_password
 
 from models import Paciente, Usuario
 

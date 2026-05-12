@@ -7,7 +7,7 @@ from core.deps import obtener_usuario_actual
 from models import Doctor, Usuario
 from models.historial_clinico import HistorialClinico
 from models.tratamiento import Tratamiento
-
+from core.security import verify_password, hash_password
 router = APIRouter(prefix="/doctores", tags=["Doctores"])
 
 
