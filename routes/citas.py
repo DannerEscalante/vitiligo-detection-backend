@@ -172,9 +172,9 @@ def ver_citas_hoy_doctor(
     ).all()
 
     resultado = []
-
+    print("AHORA:", ahora)
     for c in citas:
-
+        print("CITA:", c.fecha_hora)
         data = {
             "id": c.id,
             "fecha_hora": c.fecha_hora,
@@ -241,9 +241,9 @@ def ver_citas_proximas_doctor(
     ).all()
 
     resultado = []
-
+    print("AHORA:", ahora)  
     for c in citas:
-
+        print("CITA:", c.fecha_hora)
         data = {
             "id": c.id,
             "fecha_hora": c.fecha_hora,
