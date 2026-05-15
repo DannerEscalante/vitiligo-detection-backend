@@ -71,11 +71,12 @@ async def predict(
 
         # SI NO QUIERE GUARDAR → SOLO DEVOLVER
         if not guardar:
+
             return {
-                "prediccion_id": nueva_prediccion.id,
+                "prediccion_id": None,
                 "resultado": resultado["diagnostico"],
                 "confianza": resultado["confianza"],
-                "fecha": nueva_imagen.fecha
+                "fecha": datetime.utcnow()
             }
 
         # AQUÍ RECIÉN SE GUARDA EN DB
