@@ -72,9 +72,10 @@ async def predict(
         # SI NO QUIERE GUARDAR → SOLO DEVOLVER
         if not guardar:
             return {
-                "prediccion_id": None,
+                "prediccion_id": nueva_prediccion.id,
                 "resultado": resultado["diagnostico"],
-                "confianza": resultado["confianza"]
+                "confianza": resultado["confianza"],
+                "fecha": nueva_imagen.fecha
             }
 
         # AQUÍ RECIÉN SE GUARDA EN DB
@@ -104,7 +105,8 @@ async def predict(
         return {
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
-            "confianza": resultado["confianza"]
+            "confianza": resultado["confianza"],
+            "fecha": nueva_imagen.fecha
         }
 
     except Exception as e:
@@ -170,7 +172,8 @@ async def predict_inicial(
         return {
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
-            "confianza": resultado["confianza"]
+            "confianza": resultado["confianza"],
+            "fecha": nueva_imagen.fecha
         }
 
     except Exception as e:
