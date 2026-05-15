@@ -59,17 +59,16 @@ async def predict(
         if not paciente:
             raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
-        # guardar temporal SIEMPRE (para IA)
+        # guardar temporal 
         filename = f"{uuid.uuid4()}.jpg"
         file_path = f"{UPLOAD_DIR}/{filename}"
 
         with open(file_path, "wb") as f:
             f.write(contenido)
 
-        # predicción IA
+    
         resultado = predecir_imagen(file_path)
 
-        # SI NO QUIERE GUARDAR → SOLO DEVOLVER
         if not guardar:
 
             return {
@@ -78,8 +77,6 @@ async def predict(
                 "confianza": resultado["confianza"],
                 "fecha": datetime.utcnow()
             }
-
-        # AQUÍ RECIÉN SE GUARDA EN DB
 
         nueva_imagen = Imagen(
             paciente_id=paciente.id,

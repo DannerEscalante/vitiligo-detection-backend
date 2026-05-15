@@ -6,6 +6,7 @@ from core.database import SessionLocal
 from core.deps import obtener_usuario_actual
 
 from models import Paciente, Doctor, Cita, Prediccion, Imagen
+import pytz
 
 router = APIRouter(prefix="/citas", tags=["Citas"])
 
@@ -147,7 +148,9 @@ def ver_citas_hoy_doctor(
             detail="Solo doctores pueden ver sus citas"
         )
 
-    ahora = datetime.utcnow()
+    bolivia_tz = pytz.timezone("America/La_Paz")
+
+    ahora = datetime.now(bolivia_tz)
 
     inicio_hoy = datetime.combine(
         ahora.date(),
@@ -221,7 +224,8 @@ def ver_citas_proximas_doctor(
             detail="Solo doctores pueden ver sus citas"
         )
 
-    ahora = datetime.utcnow()
+    bolivia_tz = pytz.timezone("America/La_Paz")
+    ahora = datetime.now(bolivia_tz)
 
     fin_hoy = datetime.combine(
         ahora.date(),
