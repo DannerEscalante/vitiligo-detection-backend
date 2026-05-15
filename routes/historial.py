@@ -102,7 +102,8 @@ def ver_historial_paciente(
                 tratamiento_data["predicciones"].append({
                     "resultado": p.resultado,
                     "confianza": float(p.confianza),
-                    "imagen": f"{BASE_URL}/{p.imagen.url_imagen}" if p.imagen else None
+                    "imagen": f"{BASE_URL}/{p.imagen.url_imagen}" if p.imagen else None,
+                    "fecha": p.imagen.fecha if p.imagen else None
                 })
 
             data["tratamientos"].append(tratamiento_data)
