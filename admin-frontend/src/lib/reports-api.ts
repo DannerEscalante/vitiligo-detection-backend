@@ -27,7 +27,7 @@ async function parseApiError(response: Response) {
 }
 
 export async function getMostUsedTreatments() {
-  const response = await fetch(getApiUrl("/reportes/tratamientos-mas-usados"), {
+  const response = await fetch(getApiUrl("/reportes/tratamientos-mas-usados/"), {
     headers: getAuthHeaders()
   });
 
@@ -39,7 +39,7 @@ export async function getMostUsedTreatments() {
 }
 
 export async function getMostContinuedTreatments() {
-  const response = await fetch(getApiUrl("/reportes/tratamientos-mas-continuados"), {
+  const response = await fetch(getApiUrl("/reportes/tratamientos-mas-continuados/"), {
     headers: getAuthHeaders()
   });
 

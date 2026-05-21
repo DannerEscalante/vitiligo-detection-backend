@@ -24,7 +24,7 @@ async function parseApiError(response: Response) {
 }
 
 export async function getDoctors() {
-  const response = await fetch(getApiUrl("/doctores"), {
+  const response = await fetch(getApiUrl("/doctores/"), {
     headers: getAuthHeaders()
   });
 

@@ -24,7 +24,7 @@ async function parseApiError(response: Response) {
 }
 
 export async function getAppointments() {
-  const response = await fetch(getApiUrl("/citas"), {
+  const response = await fetch(getApiUrl("/citas/"), {
     headers: getAuthHeaders()
   });
 
@@ -37,7 +37,7 @@ export async function getAppointments() {
 
 export async function confirmAppointment(appointmentId: number, doctorId: number) {
   const response = await fetch(
-    getApiUrl(`/citas/${appointmentId}/confirmar?doctor_id=${doctorId}`),
+    getApiUrl(`/citas/${appointmentId}/confirmar/?doctor_id=${doctorId}`),
     {
       method: "PATCH",
       headers: getAuthHeaders()
