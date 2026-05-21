@@ -36,7 +36,7 @@ export async function getPatients() {
 }
 
 export async function getPatientClinicalHistory(patientId: number) {
-  const response = await fetch(getApiUrl(`/historial-clinico/doctor/paciente/${patientId}/`), {
+  const response = await fetch(getApiUrl(`/historial-clinico/doctor/paciente/${patientId}`), {
     headers: getAuthHeaders()
   });
 
@@ -48,7 +48,7 @@ export async function getPatientClinicalHistory(patientId: number) {
 }
 
 export async function getPatientActiveTreatment(patientId: number) {
-  const response = await fetch(getApiUrl(`/tratamientos/activo/paciente/${patientId}/`), {
+  const response = await fetch(getApiUrl(`/tratamientos/activo/paciente/${patientId}`), {
     headers: getAuthHeaders()
   });
 
