@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from core.database import SessionLocal
-from core.deps import obtener_usuario_actual
+from core.deps import obtener_usuario_actual, usuario_es_admin_o_gerente
 
-from models import Doctor, Cita, HistorialClinico, Prediccion
+from models import Doctor, Cita, HistorialClinico, Prediccion, Usuario
 from models.paciente import Paciente
 
 router = APIRouter(prefix="/historial-clinico", tags=["Historial Clínico"])
@@ -142,10 +142,20 @@ def ver_historial_paciente_desde_doctor(
         Doctor.usuario_id == int(usuario_id)
     ).first()
 
-    if not doctor:
+    usuario = db.query(Usuario).filter(
+        Usuario.id == int(usuario_id)
+    ).first()
+
+    es_admin_o_gerente = (
+        usuario_es_admin_o_gerente(usuario)
+        if usuario
+        else False
+    )
+
+    if not doctor and not es_admin_o_gerente:
         raise HTTPException(
             status_code=403,
-            detail="Solo doctores"
+            detail="Solo doctores, administradores o gerentes"
         )
 
     paciente = db.query(Paciente).filter(

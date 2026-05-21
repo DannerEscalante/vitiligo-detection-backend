@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from core.database import SessionLocal
-from core.deps import obtener_usuario_actual
+from core.deps import obtener_usuario_actual, usuario_es_admin_o_gerente
 
-from models import Tratamiento, Paciente, Doctor, cita
+from models import Tratamiento, Paciente, Doctor, cita, Usuario
 from models.historial_clinico import HistorialClinico
 from models.prediccion import Prediccion
 from routes import historial
@@ -135,7 +135,17 @@ def obtener_tratamiento_activo_paciente(
         Doctor.usuario_id == int(usuario_id)
     ).first()
 
-    if not doctor:
+    usuario = db.query(Usuario).filter(
+        Usuario.id == int(usuario_id)
+    ).first()
+
+    es_admin_o_gerente = (
+        usuario_es_admin_o_gerente(usuario)
+        if usuario
+        else False
+    )
+
+    if not doctor and not es_admin_o_gerente:
         raise HTTPException(
             status_code=404,
             detail="Doctor no encontrado"

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
-from core.deps import obtener_usuario_actual
+from core.deps import obtener_usuario_actual, requerir_admin_o_gerente
 from core.security import verify_password, hash_password
 
 from models import Paciente, Usuario
@@ -16,6 +16,29 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# -------------------------------
+# LISTAR PACIENTES PARA ADMIN
+# -------------------------------
+@router.get("/")
+def listar_pacientes(
+    usuario: Usuario = Depends(requerir_admin_o_gerente),
+    db: Session = Depends(get_db)
+):
+    pacientes = db.query(Paciente).order_by(
+        Paciente.nombre.asc()
+    ).all()
+
+    return [
+        {
+            "id": paciente.id,
+            "nombre": paciente.nombre,
+            "sexo": paciente.sexo,
+            "fecha_nacimiento": paciente.fecha_nacimiento
+        }
+        for paciente in pacientes
+    ]
 
 
 @router.post("/")

@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from core.database import SessionLocal
-from core.deps import obtener_usuario_actual
+from core.deps import obtener_usuario_actual, requerir_admin_o_gerente
 
-from models import Paciente, Doctor, Cita, Prediccion, Imagen
+from models import Paciente, Doctor, Cita, Prediccion, Imagen, Usuario
 import pytz
 
 router = APIRouter(prefix="/citas", tags=["Citas"])
@@ -70,6 +70,63 @@ def crear_cita(
 
 
 # -------------------------------
+# LISTAR CITAS PARA ADMIN
+# -------------------------------
+@router.get("/")
+def listar_citas(
+    usuario: Usuario = Depends(requerir_admin_o_gerente),
+    db: Session = Depends(get_db)
+):
+    # Listado global para la web administrativa. No modifica los endpoints moviles.
+    citas = db.query(Cita).order_by(
+        Cita.fecha_hora.asc()
+    ).all()
+
+    resultado = []
+
+    for c in citas:
+        data = {
+            "id": c.id,
+            "fecha_hora": c.fecha_hora,
+            "estado": c.estado,
+            "duracion": c.duracion,
+            "paciente": None,
+            "doctor": None,
+            "prediccion": None
+        }
+
+        if c.paciente:
+            data["paciente"] = {
+                "id": c.paciente.id,
+                "nombre": c.paciente.nombre,
+                "fecha_nacimiento": c.paciente.fecha_nacimiento,
+                "sexo": c.paciente.sexo
+            }
+
+        if c.doctor:
+            data["doctor"] = {
+                "id": c.doctor.id,
+                "nombre": c.doctor.nombre
+            }
+
+        if c.prediccion:
+            data["prediccion"] = {
+                "id": c.prediccion.id,
+                "resultado": c.prediccion.resultado,
+                "confianza": float(c.prediccion.confianza),
+                "imagen": (
+                    c.prediccion.imagen.url_imagen
+                    if c.prediccion.imagen
+                    else None
+                )
+            }
+
+        resultado.append(data)
+
+    return resultado
+
+
+# -------------------------------
 # CONFIRMAR CITA
 # -------------------------------
 @router.patch("/{cita_id}/confirmar")
@@ -79,12 +136,31 @@ def confirmar_cita(
     usuario_id: str = Depends(obtener_usuario_actual),
     db: Session = Depends(get_db)
 ):
+    usuario = db.query(Usuario).filter(
+        Usuario.id == int(usuario_id)
+    ).first()
+
+    if not usuario:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+
+    nombre_rol = (
+        usuario.rol.nombre_rol.strip().lower()
+        if usuario.rol and usuario.rol.nombre_rol
+        else ""
+    )
+
+    es_admin_o_gerente = nombre_rol in ["admin", "gerente"]
+
+    # Compatibilidad movil: los doctores siguen pudiendo confirmar como antes.
     doctor_auth = db.query(Doctor).filter(
         Doctor.usuario_id == int(usuario_id)
     ).first()
 
-    if not doctor_auth:
-        raise HTTPException(status_code=403, detail="Solo doctores pueden confirmar citas")
+    if not doctor_auth and not es_admin_o_gerente:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo doctores, administradores o gerentes pueden confirmar citas"
+        )
 
     cita = db.query(Cita).filter(Cita.id == cita_id).first()
     if not cita:

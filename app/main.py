@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from models import *
 from core.database import Base, engine
 from routes import disponibilidad, tipos_tratamiento, users, auth, predict
@@ -7,10 +8,30 @@ from routes import citas
 from routes import tratamientos
 from routes import doctores
 from routes import pacientes
+from routes import reportes
 from fastapi.staticfiles import StaticFiles
 import os
 
 app = FastAPI()
+
+LOCAL_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
+EXTRA_CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=LOCAL_CORS_ORIGINS + EXTRA_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 app.include_router(users.router)
 app.include_router(auth.router)
@@ -20,6 +41,7 @@ app.include_router(citas.router)
 app.include_router(tratamientos.router)
 app.include_router(doctores.router)
 app.include_router(pacientes.router)
+app.include_router(reportes.router)
 app.include_router(tipos_tratamiento.router)
 app.include_router(disponibilidad.router)
 

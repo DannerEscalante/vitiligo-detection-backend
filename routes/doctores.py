@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
-from core.deps import obtener_usuario_actual
+from core.deps import obtener_usuario_actual, requerir_admin_o_gerente
 
 from models import Doctor, Usuario
 from models.historial_clinico import HistorialClinico
@@ -17,6 +17,28 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# -------------------------------
+# LISTAR DOCTORES PARA ADMIN
+# -------------------------------
+@router.get("/")
+def listar_doctores(
+    usuario: Usuario = Depends(requerir_admin_o_gerente),
+    db: Session = Depends(get_db)
+):
+    # Respuesta minima para dropdowns administrativos.
+    doctores = db.query(Doctor).order_by(
+        Doctor.nombre.asc()
+    ).all()
+
+    return [
+        {
+            "id": doctor.id,
+            "nombre": doctor.nombre
+        }
+        for doctor in doctores
+    ]
 
 
 @router.post("/")

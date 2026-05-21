@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # -----------------------------
-# 🔹 RUTA DEL MODELO
+# RUTA DEL MODELO
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
@@ -13,7 +13,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
 modelo = None
 
 # -----------------------------
-# 🔹 CARGAR MODELO (KERAS 3)
+# CARGAR MODELO (KERAS 3)
 # -----------------------------
 def cargar_modelo():
     global modelo
@@ -25,7 +25,7 @@ def cargar_modelo():
     return modelo
 
 # -----------------------------
-# 🔹 PREPROCESAMIENTO
+# PREPROCESAMIENTO
 # -----------------------------
 def mejorar_contraste(img_rgb):
     lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
@@ -59,7 +59,7 @@ def aplicar_mascara_piel(img_rgb):
     return cv2.bitwise_and(img_cont, img_cont, mask=mask_final)
 
 # -----------------------------
-# 🔹 FUNCIÓN PRINCIPAL
+# FUNCIÓN PRINCIPAL
 # -----------------------------
 def predecir_imagen(path):
     model = cargar_modelo()
@@ -69,28 +69,27 @@ def predecir_imagen(path):
     if img is None:
         raise Exception("No se pudo leer la imagen")
 
-    # 🔥 1. BGR → RGB
+  
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    # 🔥 2. resize
+
     img_resized = cv2.resize(img, (224, 224))
 
-    # 🔥 3. preprocess_input
+
     x_norm = preprocess_input(img_resized.astype(np.float32))
 
-    # 🔥 4. revertir (CLAVE)
+  
     mean = np.array([123.68, 116.779, 103.939])
     x_rev = x_norm + mean
     x_rev = np.clip(x_rev, 0, 255).astype(np.uint8)
 
-    # 🔥 5. máscara EXACTA
+ 
     img_masked = aplicar_mascara_piel(x_rev)
 
-    # 🔥 6. preprocess otra vez
     img_final = preprocess_input(img_masked.astype(np.float32))
     img_batch = np.expand_dims(img_final, axis=0)
 
-    # 🔥 7. predicción (TFSMLayer)
+
     pred = model(img_batch)
 
     if isinstance(pred, dict):

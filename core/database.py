@@ -1,7 +1,18 @@
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "postgresql://postgres:Vit1l1g0_S3cur3@vitiligo-db:5432/vitiligo_db"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL no esta configurada. Define DATABASE_URL en el archivo .env "
+        "o en las variables de entorno del sistema."
+    )
 
 engine = create_engine(
     DATABASE_URL,
