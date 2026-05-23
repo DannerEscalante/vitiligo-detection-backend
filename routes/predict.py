@@ -104,7 +104,8 @@ async def predict(
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
             "confianza": resultado["confianza"],
-            "fecha": nueva_imagen.fecha
+            "fecha": nueva_imagen.fecha,
+            "imagen_gradcam": resultado["imagen_gradcam"]
         }
 
     except Exception as e:
@@ -171,7 +172,8 @@ async def predict_inicial(
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
             "confianza": resultado["confianza"],
-            "fecha": nueva_imagen.fecha
+            "fecha": nueva_imagen.fecha,
+            "imagen_gradcam": resultado["imagen_gradcam"]
         }
 
     except Exception as e:
