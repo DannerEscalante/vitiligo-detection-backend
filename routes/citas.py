@@ -9,6 +9,7 @@ from models import Paciente, Doctor, Cita, Prediccion, Imagen, Usuario
 import pytz
 
 router = APIRouter(prefix="/citas", tags=["Citas"])
+BOLIVIA_TZ = pytz.timezone("America/La_Paz")
 
 
 def get_db():
@@ -17,6 +18,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def normalizar_fecha_hora_local(fecha_hora: datetime):
+    if fecha_hora.tzinfo:
+        return fecha_hora.astimezone(BOLIVIA_TZ).replace(tzinfo=None)
+
+    return fecha_hora
 
 
 # -------------------------------
@@ -36,7 +44,10 @@ def crear_cita(
     if not paciente:
         raise HTTPException(status_code=403, detail="Solo pacientes")
 
-    if fecha_hora < datetime.utcnow():
+    fecha_hora = normalizar_fecha_hora_local(fecha_hora)
+    ahora_local = datetime.now(BOLIVIA_TZ).replace(tzinfo=None)
+
+    if fecha_hora < ahora_local:
         raise HTTPException(status_code=400, detail="Fecha inválida")
 
     if fecha_hora.hour < 6 or fecha_hora.hour >= 22:
