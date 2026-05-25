@@ -113,6 +113,16 @@ def detectar_vitiligo_visual(img_rgb):
         -5
     )
 
+    # Mantener solo zonas MUY claras
+    _, bright_mask = cv2.threshold(
+        l_blur,
+        190,
+        255,
+        cv2.THRESH_BINARY
+    )
+
+    mask_l = cv2.bitwise_and(mask_l, bright_mask)
+
     # Detectar baja saturación
     hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
 
@@ -155,7 +165,7 @@ def detectar_vitiligo_visual(img_rgb):
 
         area = stats[i, cv2.CC_STAT_AREA]
 
-        if 500 < area < 50000:
+        if 80 < area < 50000:
 
             final_mask[labels == i] = 255
 
