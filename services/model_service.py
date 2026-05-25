@@ -41,7 +41,8 @@ def cargar_modelo():
 
         modelo_gradcam = tf.keras.models.load_model(
             GRADCAM_MODEL_PATH,
-            compile=False
+            compile=False,
+            safe_mode=False
         )
 
     return modelo, modelo_gradcam
