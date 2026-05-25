@@ -10,42 +10,57 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "models_ml", "modelo_exportado")
+GRADCAM_MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "..",
+    "models_ml",
+    "modelo_gradcam.keras"
+)
 
 modelo = None
+modelo_gradcam = None
 
 # -----------------------------
 # CARGAR MODELO
 # -----------------------------
 def cargar_modelo():
-    global modelo
 
+    global modelo
+    global modelo_gradcam
+
+    # Modelo principal (TFSMLayer)
     if modelo is None:
+
         modelo = tf.keras.layers.TFSMLayer(
             MODEL_PATH,
             call_endpoint="serving_default"
         )
 
-    return modelo
+    # Modelo GradCAM (.keras)
+    if modelo_gradcam is None:
+
+        modelo_gradcam = tf.keras.models.load_model(
+            GRADCAM_MODEL_PATH,
+            compile=False
+        )
+
+    return modelo, modelo_gradcam
 
 # -----------------------------
 # CLAHE
 # -----------------------------
 def mejorar_contraste(img_rgb):
-
     lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
-
     l, a, b = cv2.split(lab)
-
     clahe = cv2.createCLAHE(
         clipLimit=2.0,
         tileGridSize=(8,8)
     )
-
     l_eq = clahe.apply(l)
-
     lab_eq = cv2.merge((l_eq, a, b))
-
     return cv2.cvtColor(lab_eq, cv2.COLOR_LAB2RGB)
+
+
 
 # -----------------------------
 # MÁSCARA PIEL
@@ -196,7 +211,7 @@ def image_to_base64(img_rgb):
 # -----------------------------
 def predecir_imagen(path):
 
-    model = cargar_modelo()
+    model, gradcam_model = cargar_modelo()
 
     img = cv2.imread(path)
 
@@ -245,7 +260,7 @@ def predecir_imagen(path):
     # GRADCAM
     # -----------------------------
     heatmap = generar_gradcam(
-        model,
+        gradcam_model,
         img_batch,
         img_resized
     )
