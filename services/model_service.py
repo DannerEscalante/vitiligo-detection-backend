@@ -28,6 +28,7 @@ def cargar_modelo():
     global modelo
     global modelo_gradcam
 
+    #prueba
     # Modelo principal (TFSMLayer)
     if modelo is None:
 
