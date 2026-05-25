@@ -14,7 +14,7 @@ GRADCAM_MODEL_PATH = os.path.join(
     BASE_DIR,
     "..",
     "models_ml",
-    "modelo_gradcam.keras"
+    "modelo_gradcam_limpio.h5"
 )
 
 modelo = None
