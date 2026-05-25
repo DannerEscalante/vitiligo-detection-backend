@@ -57,6 +57,11 @@ app.mount(
     StaticFiles(directory=os.path.join(BASE_DIR, "../uploads")),
     name="uploads"
 )
+app.mount(
+    "/temp_visuals",
+    StaticFiles(directory=os.path.join(BASE_DIR, "../temp_visuals")),
+    name="temp_visuals"
+)
 
 @app.get("/")
 def read_root():

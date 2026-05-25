@@ -4,6 +4,7 @@ import os
 import tensorflow as tf
 from tensorflow.keras.applications.efficientnet import preprocess_input
 import base64
+import uuid
 
 # -----------------------------
 # RUTA DEL MODELO
@@ -167,7 +168,27 @@ def image_to_base64(img_rgb):
     return base64.b64encode(buffer).decode("utf-8")
 
 
+# -----------------------------
+# GUARDAR IMAGEN TEMPORAL
+# -----------------------------
+def guardar_imagen_visual(img_rgb):
 
+    temp_dir = "temp_visuals"
+
+    os.makedirs(temp_dir, exist_ok=True)
+
+    filename = f"{uuid.uuid4()}.jpg"
+
+    filepath = os.path.join(temp_dir, filename)
+
+    img_bgr = cv2.cvtColor(
+        img_rgb,
+        cv2.COLOR_RGB2BGR
+    )
+
+    cv2.imwrite(filepath, img_bgr)
+
+    return filename
 
 
 
@@ -238,10 +259,10 @@ def predecir_imagen(path):
         visual = img_resized
 
     # Convertir visualización a base64
-    imagen_visual = image_to_base64(visual)
+    filename_visual = guardar_imagen_visual(visual)
 
     return {
         "diagnostico": diagnostico,
         "confianza": confianza,
-        "imagen_visual": imagen_visual
+        "imagen_visual_url": f"/temp_visuals/{filename_visual}"
     }
