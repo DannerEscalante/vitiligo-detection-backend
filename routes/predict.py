@@ -104,6 +104,7 @@ async def predict(
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
             "confianza": resultado["confianza"],
+            "imagen_visual": resultado["imagen_visual"],
             "fecha": nueva_imagen.fecha
         }
 
@@ -171,6 +172,7 @@ async def predict_inicial(
             "prediccion_id": nueva_prediccion.id,
             "resultado": resultado["diagnostico"],
             "confianza": resultado["confianza"],
+            "imagen_visual": resultado["imagen_visual"],
             "fecha": nueva_imagen.fecha
         }
 

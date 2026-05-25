@@ -3,6 +3,7 @@ import cv2
 import os
 import tensorflow as tf
 from tensorflow.keras.applications.efficientnet import preprocess_input
+import base64
 
 # -----------------------------
 # RUTA DEL MODELO
@@ -80,6 +81,96 @@ def aplicar_mascara_piel(img_rgb):
         mask=mask_final
     )
 
+
+# -----------------------------
+# DETECTAR ZONAS DESPIGMENTADAS
+# -----------------------------
+def detectar_vitiligo_visual(img_rgb):
+
+    # Convertir a LAB
+    lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
+
+    l, a, b = cv2.split(lab)
+
+    # Suavizar canal luminosidad
+    l_blur = cv2.GaussianBlur(l, (7,7), 0)
+
+    # Detectar zonas muy claras
+    _, mask = cv2.threshold(
+        l_blur,
+        185,
+        255,
+        cv2.THRESH_BINARY
+    )
+
+    # Limpiar ruido
+    kernel = np.ones((5,5), np.uint8)
+
+    mask = cv2.morphologyEx(
+        mask,
+        cv2.MORPH_OPEN,
+        kernel
+    )
+
+    mask = cv2.morphologyEx(
+        mask,
+        cv2.MORPH_CLOSE,
+        kernel
+    )
+
+    # Filtrar componentes pequeñas
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        mask,
+        connectivity=8
+    )
+
+    final_mask = np.zeros_like(mask)
+
+    for i in range(1, num_labels):
+
+        area = stats[i, cv2.CC_STAT_AREA]
+
+        if area > 300:
+
+            final_mask[labels == i] = 255
+
+    # Crear overlay rojo
+    overlay = img_rgb.copy()
+
+    red_mask = np.zeros_like(img_rgb)
+
+    red_mask[:, :, 0] = final_mask
+
+    result = cv2.addWeighted(
+        overlay,
+        0.75,
+        red_mask,
+        0.35,
+        0
+    )
+
+    return result
+
+
+# -----------------------------
+# CONVERTIR IMAGEN A BASE64
+# -----------------------------
+def image_to_base64(img_rgb):
+
+    img_bgr = cv2.cvtColor(
+        img_rgb,
+        cv2.COLOR_RGB2BGR
+    )
+
+    _, buffer = cv2.imencode(".jpg", img_bgr)
+
+    return base64.b64encode(buffer).decode("utf-8")
+
+
+
+
+
+
 # -----------------------------
 # FUNCIÓN PRINCIPAL
 # -----------------------------
@@ -135,12 +226,22 @@ def predecir_imagen(path):
         diagnostico = "vitiligo"
         confianza = float(pred)
 
+        # Generar visualización
+        visual = detectar_vitiligo_visual(img_resized)
+
     else:
 
         diagnostico = "no_vitiligo"
         confianza = float(1 - pred)
 
+        # Imagen normal
+        visual = img_resized
+
+    # Convertir visualización a base64
+    imagen_visual = image_to_base64(visual)
+
     return {
         "diagnostico": diagnostico,
-        "confianza": confianza
+        "confianza": confianza,
+        "imagen_visual": imagen_visual
     }
