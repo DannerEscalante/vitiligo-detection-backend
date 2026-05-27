@@ -15,7 +15,7 @@ def generar_visual_gemini(image_path):
             img_file.read()
         ).decode("utf-8")
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     prompt = """
     Resalta suavemente las posibles zonas despigmentadas compatibles con vitiligo usando un overlay rojo translúcido.
