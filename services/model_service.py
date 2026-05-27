@@ -170,19 +170,48 @@ def detectar_vitiligo_visual(img_rgb):
             final_mask[labels == i] = 255
 
     # Crear overlay rojo suave
-    overlay = img_rgb.copy()
+    # Expandir regiones detectadas
+    kernel_expand = np.ones((25,25), np.uint8)
 
-    red = np.zeros_like(img_rgb)
+    expanded_mask = cv2.dilate(
+        final_mask,
+        kernel_expand,
+        iterations=1
+    )
 
-    red[:, :, 0] = final_mask
-
-    result = cv2.addWeighted(
-        overlay,
-        0.82,
-        red,
-        0.35,
+    # Suavizar bordes
+    blurred_mask = cv2.GaussianBlur(
+        expanded_mask,
+        (31,31),
         0
     )
+
+    # Normalizar intensidad
+    blurred_mask = blurred_mask.astype(np.float32) / 255.0
+
+    # Crear overlay rojo
+    overlay = img_rgb.copy().astype(np.float32)
+
+    red_layer = np.zeros_like(overlay)
+
+    red_layer[:,:,0] = 255
+
+    # Intensidad variable
+    alpha = blurred_mask * 0.45
+
+    # Aplicar overlay suave
+    for c in range(3):
+
+        overlay[:,:,c] = (
+            overlay[:,:,c] * (1 - alpha)
+            + red_layer[:,:,c] * alpha
+        )
+
+    result = np.clip(
+        overlay,
+        0,
+        255
+    ).astype(np.uint8)
 
     return result
 
