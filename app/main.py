@@ -11,6 +11,7 @@ from routes import pacientes
 from routes import reportes
 from fastapi.staticfiles import StaticFiles
 import os
+from routes import gemini_test
 
 app = FastAPI()
 
@@ -44,7 +45,7 @@ app.include_router(pacientes.router)
 app.include_router(reportes.router)
 app.include_router(tipos_tratamiento.router)
 app.include_router(disponibilidad.router)
-
+app.include_router(gemini_test.router)
 
 
 Base.metadata.create_all(bind=engine)
