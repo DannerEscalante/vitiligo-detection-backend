@@ -2,7 +2,13 @@ import os
 import requests
 import base64
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+print("GEMINI KEY:", GEMINI_API_KEY)
 
 def generar_visual_gemini(image_path):
 
