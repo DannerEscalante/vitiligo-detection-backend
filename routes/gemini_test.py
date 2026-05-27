@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File
 import shutil
 import os
 
-from services.gemini_service import generar_visual_gemini
+from services.gemini_service import detectar_regiones_vitiligo
 
 router = APIRouter()
 
@@ -24,6 +24,6 @@ async def test_gemini(
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    result = generar_visual_gemini(filepath)
+    result = detectar_regiones_vitiligo(filepath)
 
     return result
