@@ -75,6 +75,7 @@ async def predict(
                 "prediccion_id": None,
                 "resultado": resultado["diagnostico"],
                 "confianza": resultado["confianza"],
+                "imagen_visual": resultado["imagen_visual"],
                 "fecha": datetime.utcnow()
             }
 
