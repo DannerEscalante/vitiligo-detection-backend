@@ -326,7 +326,8 @@ def predecir_imagen(path):
     # Convertir visualización a base64
     filename_visual = guardar_imagen_visual(visual)
     
-    imagen_url = f"/temp_visuals/{filename_visual}"
+    imagen_url = f"http://37.60.231.27:8001/temp_visuals/{filename_visual}"
+    
     return {
         "diagnostico": diagnostico,
         "confianza": confianza,
