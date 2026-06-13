@@ -249,12 +249,14 @@ def listar_doctores_admin(
         citas_canceladas = sum(1 for c in citas if c.estado == "cancelada")
         
         # Reglas de disponibilidad:
-        # 0-2 pendientes -> alta
-        # 3-5 pendientes -> media
-        # 6+ pendientes -> alta carga
-        if citas_pendientes <= 2:
+        # Solo las citas confirmadas asignadas al doctor ocupan disponibilidad.
+        # Las pendientes aun no tienen asignacion clinica efectiva.
+        # 0-2 confirmadas -> alta
+        # 3-5 confirmadas -> media
+        # 6+ confirmadas -> alta carga
+        if citas_confirmadas <= 2:
             disponibilidad = "alta"
-        elif citas_pendientes <= 5:
+        elif citas_confirmadas <= 5:
             disponibilidad = "media"
         else:
             disponibilidad = "alta carga"
