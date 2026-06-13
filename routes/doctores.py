@@ -251,12 +251,12 @@ def listar_doctores_admin(
         # Reglas de disponibilidad:
         # Solo las citas confirmadas asignadas al doctor ocupan disponibilidad.
         # Las pendientes aun no tienen asignacion clinica efectiva.
-        # 0-2 confirmadas -> alta
-        # 3-5 confirmadas -> media
-        # 6+ confirmadas -> alta carga
-        if citas_confirmadas <= 2:
+        # 0-7 confirmadas -> alta
+        # 8-14 confirmadas -> media
+        # 15+ confirmadas -> alta carga
+        if citas_confirmadas <= 7:
             disponibilidad = "alta"
-        elif citas_confirmadas <= 5:
+        elif citas_confirmadas <= 14:
             disponibilidad = "media"
         else:
             disponibilidad = "alta carga"

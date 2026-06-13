@@ -153,10 +153,7 @@ export default function DoctoresPage() {
                         />
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between border-t border-dotted border-current/20 pt-2 text-[10px]">
-                        <span className={isSelected ? "text-slate-300" : "text-slate-500"}>
-                          Pendientes: <strong className="font-bold">{doc.citas_pendientes}</strong>
-                        </span>
+                      <div className="mt-3 flex items-center justify-end border-t border-dotted border-current/20 pt-2 text-[10px]">
                         <span className={isSelected ? "text-slate-300" : "text-slate-500"}>
                           Confirmadas: <strong className="font-bold">{doc.citas_confirmadas}</strong>
                         </span>

@@ -68,9 +68,9 @@ export function DoctorDetails({ doctor, stats, activity, isLoading }: DoctorDeta
   };
 
   const availabilityLabels = {
-    alta: "Disponible (Alta)",
-    media: "Moderada (Media)",
-    "alta carga": "Alta Carga Médica"
+    alta: "Altamente disponible",
+    media: "Moderadamente disponible",
+    "alta carga": "Alta carga medica"
   };
 
   const getSexoLabel = (sexo: string | null) => {
@@ -82,12 +82,12 @@ export function DoctorDetails({ doctor, stats, activity, isLoading }: DoctorDeta
   };
 
   // Desglose de estados de citas para porcentajes
-  const totalCitas = stats?.total_citas ?? 0;
   const dist = stats?.distribucion_estados ?? { pendiente: 0, confirmada: 0, cancelada: 0, finalizada: 0 };
+  const totalCitasDistribucion = dist.confirmada + dist.finalizada + dist.cancelada;
   
   const getPercent = (count: number) => {
-    if (totalCitas === 0) return 0;
-    return Math.round((count / totalCitas) * 100);
+    if (totalCitasDistribucion === 0) return 0;
+    return Math.round((count / totalCitasDistribucion) * 100);
   };
 
   return (
@@ -166,7 +166,7 @@ export function DoctorDetails({ doctor, stats, activity, isLoading }: DoctorDeta
             <CardDescription>Análisis porcentual de citas asignadas.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {totalCitas === 0 ? (
+            {totalCitasDistribucion === 0 ? (
               <div className="text-center py-6 text-sm text-slate-400">
                 No hay citas registradas para este médico.
               </div>
@@ -191,17 +191,6 @@ export function DoctorDetails({ doctor, stats, activity, isLoading }: DoctorDeta
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                     <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${getPercent(dist.confirmada)}%` }} />
-                  </div>
-                </div>
-
-                {/* Pendientes */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs font-medium text-slate-700">
-                    <span>Pendientes ({dist.pendiente})</span>
-                    <span>{getPercent(dist.pendiente)}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${getPercent(dist.pendiente)}%` }} />
                   </div>
                 </div>
 
